@@ -85,7 +85,7 @@
                             <RowDefinition Height="*"></RowDefinition>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="*" MaxWidth="528"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <TextBox
                             Name="Login"
@@ -157,6 +157,8 @@
                 </Border>
                 <StackPanel
                     DockPanel.Dock="Bottom"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Margin="0, 28, 0, 0">
                     <CheckBox

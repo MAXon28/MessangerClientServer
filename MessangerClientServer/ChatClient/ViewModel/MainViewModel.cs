@@ -27,7 +27,7 @@ namespace ChatClient.ViewModel
 
         private void ToServer()
         {
-            string ip = "192.168.1.66";
+            string ip = "127.0.0.1";
             int port = 8080;
             IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
             Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
