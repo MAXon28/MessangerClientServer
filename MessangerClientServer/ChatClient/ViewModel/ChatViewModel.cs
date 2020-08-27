@@ -1,0 +1,586 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
+using AutoMapper;
+using ChatClient.Interface;
+using ChatClient.Logic;
+using ChatClient.Model;
+using ChatClient.View;
+using ChatLibrary;
+using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.CommandWpf;
+using ToastNotifications;
+using ToastNotifications.Messages;
+
+namespace ChatClient.ViewModel
+{
+    /// <summary>
+    /// Отвечает за тип загрузки сообщения: 1 - загрузка прошлых сообщений, 2 - загрузка новых сообщений
+    /// </summary>
+    enum TypeOfLoadMessage
+    {
+        PastMessages = 1,
+        NewMessages = 2
+    }
+
+    class ChatViewModel : ViewModelBase, IViewModel
+    {
+        private ChatView _chatView;
+        private Notifier _notifier;
+        private ServerWorker _serverWorker;
+        private string _name;
+        private readonly Cache _cache = new Cache();
+        private int _topID;
+
+        /// <summary>
+        /// Источник, откуда загружаются актуальные сообщения: 0 - не нужно загружать, 1 - загрузка из сервера, 2 - загрузка из кэша
+        /// </summary>
+        private int _typeOfSource;
+
+        /// <summary>
+        /// Написал ли данные пользователь новое сообщение (используется как флаг)
+        /// </summary>
+        private bool _haveNewMessage;
+
+        /// <summary>
+        /// Идёт ли прогрузка вниз (используется как флаг)
+        /// </summary>
+        private bool _isGoToBottom;
+
+        /// <summary>
+        /// Количество нажайти на кнопку "Вниз" подряд
+        /// </summary>
+        private int _countClickButtonToBottom;
+
+        public ChatViewModel() { }
+
+        public ChatViewModel(ChatView chatView, Notifier notifier, string name)
+        {
+
+            _chatView = chatView;
+            _notifier = notifier;
+            _serverWorker = ServerWorker.NewInstance();
+            _name = name;
+
+            Messages = new ObservableCollection<Message>();
+            Condition = "Visible";
+            Index = 0;
+            IsFocus = true;
+            IsVisibleNotification = false;
+            IsVisibleButtonToBottom = false;
+            CountNewMessages = 0;
+
+            _haveNewMessage = false;
+            _isGoToBottom = false;
+            _countClickButtonToBottom = 0;
+        }
+
+        public void StartLoad()
+        {
+            List<Message> chatMessagesClient = MessagesContainer.GetMessages();
+            List<ChatMessageDTO> chatMessagesServer = new List<ChatMessageDTO>();
+            if (chatMessagesClient.Count > 0)
+            {
+                _topID = chatMessagesClient[0].Id;
+                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<Message, ChatMessageDTO>()).CreateMapper();
+                (List<ChatMessageDTO>, int) data = _serverWorker.GetMessagesStart(mapper.Map<List<Message>, List<ChatMessageDTO>>(chatMessagesClient));
+                chatMessagesServer = data.Item1;
+                foreach (var message in chatMessagesClient)
+                {
+                    message.DateSend = Day.GetParsedDate(message.DateSend);
+                    Messages.Add(message);
+                }
+                if (chatMessagesServer.Count > 0)
+                {
+                    _typeOfSource = 1;
+                    TestAsync(chatMessagesServer, data.Item2, chatMessagesClient.Count - 1);
+                }
+                else
+                {
+                    _typeOfSource = 0;
+                }
+            }
+            else
+            {
+                chatMessagesServer = _serverWorker.GetMessagesStart();
+
+                _topID = chatMessagesServer.Count > 0 ? chatMessagesServer[0].Id : -1;
+                _typeOfSource = 0;
+
+                foreach (var message in chatMessagesServer)
+                {
+                    Messages.Add(new Message
+                    {
+                        Id = message.Id,
+                        SenderName = message.SenderName,
+                        DateSend = message.DateSend,
+                        SendMessage = message.SendMessage,
+                        IsItMe = message.SenderName == _name
+                    });
+                    AddNewMessageIntContainerAndUpdateDateSend();
+                }
+            }
+        }
+
+        public ObservableCollection<Message> Messages { get; set; }
+
+        public void SetWorker(ServerWorker serverWorker)
+        {
+            _serverWorker = serverWorker;
+        }
+
+        public string Condition { get; set; }
+
+        public int Index { get; set; }
+
+        public string Message { get; set; }
+
+        public bool IsFocus { get; set; }
+
+        public bool IsVisibleNotification { get; set; } 
+
+        public bool IsVisibleButtonToBottom { get; set; }
+
+        public int CountNewMessages { get; set; }
+
+        public double Opacity { get; set; }
+
+        public ICommand Send
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    if (!string.IsNullOrEmpty(Message))
+                    {
+                        if (_typeOfSource == 1)
+                        {
+                            Messages.Clear();
+                            if (CountNewMessages < 100 && _cache.IndexLevel > 0)
+                            {
+                                Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                            }
+                            CountNewMessages = 0;
+                            _serverWorker.GetMessagesActual();
+                            _haveNewMessage = true;
+                        }
+                        else if (_typeOfSource == 2)
+                        {
+                            Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                        }
+                        _typeOfSource = 0;
+                        if (!_haveNewMessage)
+                        {
+                            Messages.Add(new Message()
+                            {
+                                Id = Messages.Count > 0 ? Messages[Messages.Count - 1].Id + 1 : 1,
+                                SenderName = _name,
+                                DateSend = DateTime.Now.ToString(),
+                                SendMessage = Message,
+                                IsItMe = true
+                            });
+                            _serverWorker.SendMessage(Message);
+                            AddNewMessageIntContainerAndUpdateDateSend();
+                            _chatView.Scroll();
+                            _topID = Messages[0].Id;
+                            Message = "";
+                        }
+                        _countClickButtonToBottom = 0;
+                        IsVisibleButtonToBottom = false;
+                        _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                    }
+                });
+            }
+        }
+
+        public void UpdateMessages()
+        {
+            IsFocus = false;
+            if (!_haveNewMessage && !_isGoToBottom)
+            {
+                _serverWorker.GetMessages(_topID, "Have ID");
+            }
+        }
+
+        public ICommand CopyText
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    Clipboard.SetText(Messages[Index].SendMessage);
+                    ShowNotificationAsync();
+                });
+            }
+        }
+
+        /// <summary>
+        /// Срабатывает при нажатии на кнопку "Вниз"
+        /// </summary>
+        public ICommand GoToBottom
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    if (_typeOfSource == 2 && CountNewMessages == 0) // Если новых сообщений нет, но есть закэшированные данные
+                    {
+                        Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                        _chatView.Scroll();
+                    }
+                    if (CountNewMessages > 0 && _countClickButtonToBottom == 1) // Если есть новые сообщения и кнопка нажимается второй раз подряд
+                    {
+                        _isGoToBottom = true;
+                        Messages.Clear();
+                        if (CountNewMessages < 200 && _cache.IndexLevel > 0)
+                        {
+                            Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                        }
+                        else
+                        {
+                            _serverWorker.GetMessagesActual();
+                        }
+                        _countClickButtonToBottom = 0;
+                    }
+                    else if (CountNewMessages > 0 && _countClickButtonToBottom == 0)
+                    {
+                        if (CountNewMessages < 200)
+                        {
+                            Messages.Clear();
+                            if (_cache.IndexLevel > 0)
+                            {
+                                Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                            }
+                            _serverWorker.GetMessagesActual();
+                        }
+                        else
+                        {
+                            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                            _countClickButtonToBottom++;
+                        }
+                        _isGoToBottom = true;
+                        return;
+                    }
+                    else // Иначе просто прокручивается до самого нового сообщения
+                    {
+                        _chatView.Scroll();
+                    }
+                    _typeOfSource = 0;
+                    _countClickButtonToBottom = 0;
+                    CountNewMessages = 0;
+                    IsVisibleButtonToBottom = false;
+                    _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Отображает или убирает кнопку "Вниз"
+        /// </summary>
+        /// <param name="isVisible"></param>
+        public void ShowButtonToBottom(bool isVisible)
+        {
+            IsFocus = false;
+            if (_cache.IndexLevel == 0 && CountNewMessages == 0)
+            {
+                IsVisibleButtonToBottom = isVisible;
+                _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                if (IsVisibleButtonToBottom)
+                {
+                    GetFlickerAsync();
+                }
+                else
+                {
+                    CountNewMessages = 0;
+                }
+                _countClickButtonToBottom = 0;
+                IsFocus = true;
+            }
+            else if (_cache.IndexLevel > 0 && _isGoToBottom == false)
+            {
+                _isGoToBottom = true;
+                Application.Current.Dispatcher.Invoke(LoadFromCache, DispatcherPriority.Background);
+                _countClickButtonToBottom = 0;
+                IsFocus = true;
+                return;
+            }
+            else if (_cache.IndexLevel > 0)
+            {
+                _isGoToBottom = false;
+                IsFocus = true;
+            }
+            else if (CountNewMessages > 0 && _isGoToBottom == false)
+            {
+                if (CountNewMessages > 100)
+                {
+                    _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                }
+                else
+                {
+                    CountNewMessages = 0;
+                    var mapper = new MapperConfiguration(cfg => cfg.CreateMap<Message, ChatMessageDTO>()).CreateMapper();
+                    _serverWorker.GetMessages(mapper.Map<Message, ChatMessageDTO>(MessagesContainer.GetMessage()));
+                }
+                _countClickButtonToBottom = 0;
+            }
+            _isGoToBottom = false;
+        }
+
+        private void LoadFromCache()
+        {
+            List<Message> list = _cache.DeserializeMessages(1);
+            if (_cache.IndexLevel == 0)
+            {
+                _typeOfSource = 0;
+            }
+            foreach (var message in list)
+            {
+                Messages.Add(message);
+            }
+            DeletePastMessages();
+            _chatView.Scroll(Messages.Count - list.Count);
+            _topID = Messages[0].Id;
+        }
+
+        public void Notification(BinaryReader binaryReader)
+        {
+            string code = binaryReader.ReadString();
+            switch (code)
+            {
+                case "29":
+                    _notifier.ShowInformation(binaryReader.ReadString());
+                    break;
+                case "30":
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        NewMessage(binaryReader);
+                    }, DispatcherPriority.Background);
+                    break;
+                case "31":
+                    Application.Current.Dispatcher.Invoke(PastMessages, DispatcherPriority.Background);
+                    break;
+                case "67":
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        NewMessages(binaryReader);
+                    }, DispatcherPriority.Background);
+                    break;
+            }
+        }
+
+        private async void TestAsync(List<ChatMessageDTO> chatMessagesServer, int count, int index)
+        {
+            await Task.Run(() =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var message in chatMessagesServer)
+                    {
+                        Messages.Add(new Message
+                        {
+                            Id = message.Id,
+                            SenderName = message.SenderName,
+                            DateSend = message.DateSend,
+                            SendMessage = message.SendMessage,
+                            IsItMe = message.SenderName == _name
+                        });
+                        AddNewMessageIntContainerAndUpdateDateSend();
+                    }
+                    IsVisibleButtonToBottom = true;
+                    _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                    CountNewMessages = count;
+                    _chatView.Scroll(index);
+
+                }, DispatcherPriority.Background);
+            });
+        }
+
+        /// <summary>
+        /// Отображает уведомление о скопированном тексте
+        /// </summary>
+        private async void ShowNotificationAsync()
+        {
+            IsVisibleNotification = true;
+            await Task.Delay(1928);
+            IsVisibleNotification = false;
+        }
+
+        /// <summary>
+        /// Постепенно делает прозрачным кнопку "Вниз"
+        /// </summary>
+        private async void GetFlickerAsync()
+        {
+            Opacity = 1;
+            for (int i = 0; i < 9; i++)
+            {
+                await Task.Delay(128);
+                Opacity = i % 2 == 0 ? Opacity - 0.05 : Opacity - 0.02;
+            }
+        }
+
+        /// <summary>
+        /// Получение нового сообщения со стороны сервера
+        /// </summary>
+        /// <param name="binaryReader"></param>
+        private void NewMessage(BinaryReader binaryReader)
+        {
+            string stringAnswer = binaryReader.ReadString();
+            if (stringAnswer != "+1")
+            {
+                Messages.Add(new Message()
+                {
+                    Id = Messages.Count > 0 ? Messages[Messages.Count - 1].Id + 1 : 1,
+                    SenderName = stringAnswer,
+                    SendMessage = binaryReader.ReadString(),
+                    DateSend = binaryReader.ReadString(),
+                    IsItMe = false
+                });
+                AddNewMessageIntContainerAndUpdateDateSend();
+                _chatView.Scroll();
+            }
+            else
+            {
+                CountNewMessages++;
+            }
+        }
+
+        /// <summary>
+        /// Подгрузка прошлых сообщений
+        /// </summary>
+        private void PastMessages()
+        {
+            if (Messages.Count >= 400)
+            {
+                _typeOfSource = 2;
+                _cache.SerializeMessages(Messages.Skip(Messages.Count - 200).ToList());
+                int count = 0;
+                while (count < 200)
+                {
+                    Messages.RemoveAt(Messages.Count - 1);
+                    count++;
+                }
+            }
+
+            AddMessages(TypeOfLoadMessage.PastMessages);
+            _topID = Messages[0].Id;
+
+            IsFocus = true;
+        }
+
+        /// <summary>
+        /// Подгрузка новых сообщений
+        /// </summary>
+        /// <param name="binaryReader"> Данные, полученные из сервера </param>
+        private void NewMessages(BinaryReader binaryReader)
+        {
+            CountNewMessages = binaryReader.ReadInt32();
+            _typeOfSource = CountNewMessages == 0 ? 0 : 1;
+            DeletePastMessages();
+            AddMessages(TypeOfLoadMessage.NewMessages);
+            if (_isGoToBottom && CountNewMessages == 0)
+            {
+                _chatView.Scroll();
+            }
+
+            if (_haveNewMessage)
+            {
+                Messages.Add(new Message()
+                {
+                    Id = Messages.Count > 0 ? Messages[Messages.Count - 1].Id + 1 : 1,
+                    SenderName = _name,
+                    DateSend = DateTime.Now.ToString(),
+                    SendMessage = Message,
+                    IsItMe = true
+                });
+                _serverWorker.SendMessage(Message);
+                AddNewMessageIntContainerAndUpdateDateSend();
+                Message = "";
+                _chatView.Scroll();
+                _haveNewMessage = false;
+            }
+            _topID = Messages[0].Id;
+
+            IsFocus = true;
+        }
+
+        /// <summary>
+        /// Добавляет новые сообщения, которые пришли из сервера
+        /// </summary>
+        /// <param name="typeOfLoadMessage"> Тип загрузки сообщений </param>
+        private void AddMessages(TypeOfLoadMessage typeOfLoadMessage)
+        {
+            IFormatter formatter = new BinaryFormatter();
+            var list = (List<ChatMessageDTO>)formatter.Deserialize(_serverWorker.NetworkStream);
+            if (list.Count > 0)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    Messages.Add(new Message()
+                    {
+                        Id = list[i].Id,
+                        SenderName = list[i].SenderName,
+                        DateSend = list[i].DateSend,
+                        SendMessage = list[i].SendMessage,
+                        IsItMe = list[i].SenderName == _name
+                    });
+                    if (typeOfLoadMessage == TypeOfLoadMessage.PastMessages)
+                    {
+                        Messages[Messages.Count - 1].DateSend = Day.GetParsedDate(Messages[Messages.Count - 1].DateSend);
+                    }
+                    else
+                    {
+                        AddNewMessageIntContainerAndUpdateDateSend();
+                    }
+                }
+
+                Messages = new ObservableCollection<Message>(from data in Messages
+                    orderby data.Id
+                    select data);
+
+                if (typeOfLoadMessage == TypeOfLoadMessage.PastMessages)
+                {
+                    _chatView.Scroll(list.Count);
+                }
+                else
+                {
+                    _chatView.Scroll(Messages.Count - list.Count);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Загружает сообщение в контейнер и задаёт понятную для пользователя дату
+        /// </summary>
+        private void AddNewMessageIntContainerAndUpdateDateSend()
+        {
+            MessagesContainer.AddMessage(Messages[Messages.Count - 1].Id,
+                Messages[Messages.Count - 1].SenderName,
+                Messages[Messages.Count - 1].DateSend,
+                Messages[Messages.Count - 1].SendMessage,
+                Messages[Messages.Count - 1].IsItMe);
+            Messages[Messages.Count - 1].DateSend = Day.GetParsedDate(Messages[Messages.Count - 1].DateSend);
+        }
+
+        private void DeletePastMessages()
+        {
+            if (Messages.Count >= 400)
+            {
+                int count = 0;
+                while (count < 200)
+                {
+                    Messages.RemoveAt(0);
+                    count++;
+                }
+            }
+        }
+    }
+}

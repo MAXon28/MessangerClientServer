@@ -1,60 +1,186 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Security;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Xml.Serialization;
+using ChatClient.Interface;
+using ChatClient.Logic;
+using ChatClient.Model;
+using ChatClient.View;
+using ChatClient.View.Dialog;
+using ChatClient.ViewModel.Dialog;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace ChatClient.ViewModel
 {
-    class MainViewModel : ViewModelBase
+    class MainViewModel : ViewModelBase, IHash
     {
+        private ServerWorker _serverWorker = ServerWorker.NewInstance();
+        private LogicDb _logicDb = new LogicDb();
+        private MainWindow _viewWindow;
+        private ServerConnection _serverConnection;
+
         public MainViewModel() { }
+
+        public MainViewModel(MainWindow viewWindow)
+        {
+            _viewWindow = viewWindow;
+
+            Password = new SecureString();
+
+            if (_logicDb.GetCountSaveUsers() > 0)
+            {
+                (string, string) data = _logicDb.GetSaveData();
+                Login = data.Item1;
+                for (int i = 0; i < data.Item2.Length; i++)
+                {
+                    Password.AppendChar(data.Item2[i]);
+                }
+                _viewWindow.PasswordWrite(new System.Net.NetworkCredential(string.Empty, Password).Password);
+            }
+
+            IsNotAuthorization = false;
+            IsCanClick = true;
+
+            _serverConnection = ServerConnection.NewInstance();
+        }
 
         public string Login { get; set; }
 
-        public string Password { get; set; }
+        public SecureString Password { get; set; }
 
-        public bool Remember { get; set; }
+        public bool IsRemember { get; set; }
 
-        public ICommand Send
+        public bool IsNotAuthorization { get; set; }
+
+        public bool IsCanClick { get; set; }
+
+        public ICommand RestoreUser
         {
             get
             {
-                return new RelayCommand(() => { ToServer(); });
+                return  new RelayCommand(() =>
+                {
+                    if (_logicDb.GetCountSaveUsers() > 1)
+                    {
+                        (string, string) data = _logicDb.GetSaveData();
+                        Login = data.Item1;
+                        Password.Clear();
+                        for (int i = 0; i < data.Item2.Length; i++)
+                        {
+                            Password.AppendChar(data.Item2[i]);
+                        }
+                        _viewWindow.PasswordWrite(new System.Net.NetworkCredential(string.Empty, Password).Password);
+                    }
+                });
             }
         }
 
-        private void ToServer()
+        public ICommand OpenChat => new RelayCommand(() =>
         {
-            string ip = "127.0.0.1";
-            int port = 8080;
-            IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-            Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            //var data = Encoding.UTF8.GetBytes(Text);
-
-            client.Connect(tcpEndPoint);
-
-            //client.Send(data);
-
-            //BinaryReader reader = new BinaryReader(client.St);
-
-            /*var bufferBytes = new byte[256];
-            var size = 0;
-            var answer = new StringBuilder();
-
-            do
+            IsCanClick = false;
+            bool isCanContinue = true;
+            if (_serverConnection.Ip == null)
             {
-                size = client.Receive(bufferBytes);
-                answer.Append(Encoding.UTF8.GetString(bufferBytes, 0, size));
+                var serverDialogViewModel = new ServerDialogViewModel();
+                ServerDialogView serverDialogView = new ServerDialogView(serverDialogViewModel);
+                serverDialogView.ShowDialog();
+                isCanContinue = serverDialogViewModel.IsConfirm;
             }
-            while (client.Available > 0);
 
-            Text = answer.ToString();*/
+            if (isCanContinue)
+            {
+                ToServerAsync();
+            }
+            else
+            {
+                IsCanClick = true;
+            }
+        });
 
-            client.Shutdown(SocketShutdown.Both);
-            client.Close();
+        public ICommand OpenRegistration
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    NewPage = new RegistrationView();
+                    NewPage.DataContext = new RegistrationViewModel();
+                });
+            }
+        }
+
+        public ICommand OpenServerSettings
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    ServerDialogView serverDialogView = new ServerDialogView(new ServerDialogViewModel());
+                    serverDialogView.ShowDialog();
+                });
+            }
+        }
+
+        public FrameworkElement NewPage { get; set; }
+
+        private async void ToServerAsync()
+        {
+            string resultCode = "";
+            string name = "";
+            string login = Login ?? "";
+            string password = new System.Net.NetworkCredential(string.Empty, Password).Password;
+            await Task.Run(() =>
+            {
+                try
+                {
+                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name);
+                    if (resultCode == "28")
+                    {
+                        if (IsRemember)
+                        {
+                            Task.Run(() => _logicDb.AddNewUser(login, password));
+                        }
+                    }
+                    else
+                    {
+                        IsNotAuthorization = true;
+                    }
+                }
+                catch
+                {
+                    // ignore
+                }
+            });
+
+            if (resultCode == "28")
+            {
+                MainChatPageViewModel mainChatPageViewModel = new MainChatPageViewModel(name);
+
+                NewPage = new MainChatPageView();
+                NewPage.DataContext = mainChatPageViewModel;
+                mainChatPageViewModel.StartLoad();
+            }
+            else if (resultCode == "")
+            {
+                ErrorDialogView errorDialogView = new ErrorDialogView(new ErrorDialogViewModel("Ошибка подключения к серверу!"));
+                errorDialogView.ShowDialog();
+            }
+            IsCanClick = true;
+        }
+
+        public string GetHash(string password)
+        {
+            var sha = new SHA1Managed();
+            byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(hash);
         }
     }
 }

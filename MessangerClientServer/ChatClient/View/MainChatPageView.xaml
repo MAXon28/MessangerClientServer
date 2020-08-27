@@ -1,0 +1,143 @@
+﻿<UserControl x:Class="ChatClient.View.MainChatPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModel="clr-namespace:ChatClient.ViewModel"
+             mc:Ignorable="d" 
+             d:DesignHeight="728" d:DesignWidth="728" Background="#373737" Visibility="{Binding Condition}">
+    <UserControl.DataContext>
+        <viewModel:MainChatPageViewModel/>
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style TargetType="{x:Type Button}">
+            <Style.Triggers>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+            <Setter Property="RenderTransformOrigin" Value="0.28, 0.28"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="brdr" TextBlock.Foreground="{TemplateBinding Foreground}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Content="{TemplateBinding Content}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition MinWidth="167" MaxWidth="167"/>
+            <ColumnDefinition MinWidth="373"/>
+        </Grid.ColumnDefinitions>
+        <Border
+            Grid.Column="0"
+            BorderThickness="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition MaxHeight="67"/>
+                    <RowDefinition MaxHeight="67"/>
+                    <RowDefinition MaxHeight="67"/>
+                    <RowDefinition MaxHeight="67"/>
+                    <RowDefinition MaxHeight="67"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Button
+                    Grid.Row="0"
+                    Command="{Binding OpenMyPage}"
+                    Focusable="False"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="9,14,9,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="Home" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Моя страница" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+                <Button 
+                    Grid.Row="1"
+                    Command="{Binding OpenAllUsers}"
+                    Focusable="False"
+                    IsEnabled="False"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="9, 4, 0, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="People" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Пользователи" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+                <Button 
+                    Grid.Row="2"
+                    Command="{Binding OpenChat}"
+                    Focusable="False"
+                    IsEnabled="True"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="9, 4, 0, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="Chat" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Чат" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+                <Button 
+                    Grid.Row="3"
+                    Command="{Binding OpenMiniGame}"
+                    Focusable="False"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="9, 4, 0, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="Games" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Мини-игра" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+                <Button 
+                    Grid.Row="4"
+                    Command="{Binding OpenSettings}"
+                    Focusable="False"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="9, 4, 0, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="Settings" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Настройки" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <ContentControl Focusable="False" Grid.Column="1" Content="{Binding Content}"/>
+    </Grid>
+</UserControl>

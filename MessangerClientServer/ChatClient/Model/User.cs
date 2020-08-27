@@ -13,11 +13,5 @@ namespace ChatClient.Model
 
         [MaxLength(19), NotNull]
         public string Password { get; set; }
-
-        [MaxLength(12), NotNull]
-        public string Name { get; set; }
-
-        [NotNull]
-        public int RememberUser { get; set; }
     }
 }

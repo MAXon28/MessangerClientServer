@@ -3,13 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewModel="clr-namespace:ChatClient.ViewModel"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="Bezu" Height="728" Width="728" WindowStartupLocation="CenterScreen" Background="#373737">
-
-    <Window.DataContext>
-        <viewModel:MainViewModel/>
-    </Window.DataContext>
+        Title="Bezu" Width="728" Height="728" MinWidth="555" MinHeight="667" WindowStartupLocation="CenterScreen" Background="#373737">
 
     <Window.Resources>
         <Style TargetType="{x:Type CheckBox}">
@@ -41,6 +37,64 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="BackColor"  TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border CornerRadius="7" Background="{TemplateBinding Background}" Padding="5">
+                            <ContentPresenter
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#1E90FF"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#f4f4f4"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="Click">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -60,7 +114,11 @@
                     MaxWidth="128"
                     MaxHeight="128"
                     MinWidth="128"
-                    MinHeight="128"/>
+                    MinHeight="128">
+                    <Image.Effect>
+                        <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+                    </Image.Effect>
+                </Image>
                 <Label
                     DockPanel.Dock="Top"
                     HorizontalAlignment="Center"
@@ -72,7 +130,32 @@
                     FontSize="55"
                     FontWeight="DemiBold"
                     FontStyle="Italic"
-                    Margin="0, 0, 0, 28"/>
+                    Margin="0, 0, 0, 28">
+                    <Label.Effect>
+                        <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+                    </Label.Effect>
+                </Label>
+                <Label
+                    DockPanel.Dock="Top"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Content="Неправильный логин или пароль"
+                    FontSize="16"
+                    Foreground="#DC143C"
+                    Margin="0, 0, 0, 4">
+                    <Label.Style>
+                        <Style TargetType="{x:Type Label}">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                            <Style.Triggers>
+                                <DataTrigger  Binding="{Binding IsNotAuthorization}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
                 <Border 
                     Focusable="False"
                     DockPanel.Dock="Top"
@@ -85,7 +168,7 @@
                             <RowDefinition Height="*"></RowDefinition>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" MaxWidth="528"></ColumnDefinition>
+                            <ColumnDefinition Width="*" MaxWidth="528" MinWidth="528"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <TextBox
                             Name="Login"
@@ -120,19 +203,20 @@
                                 </Style>
                             </Label.Style>
                         </Label>
-                        <TextBox
-                            Name="Password"
+                        <PasswordBox
+                            Name="PasswordBoxChat"
                             BorderThickness="0, 1.5, 0, 0"
                             BorderBrush="#1E90FF"
                             Grid.Row="1"
                             Grid.Column="0"
                             Foreground="#f4f4f4"
-                            Text="{Binding Password}"
+                            PasswordChanged="PasswordBox_PasswordChanged"
                             VerticalContentAlignment="Center"
                             FontSize="28"
                             Padding="3, 12, 12, 12"
                             Background="#373737"
-                            MaxLength="19"/>
+                            MaxLength="19"
+                            IsInactiveSelectionHighlightEnabled="False"/>
                         <Label
                             Grid.Row="1"
                             Grid.Column="0"
@@ -146,7 +230,10 @@
                                 <Style TargetType="{x:Type Label}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger  Binding="{Binding Text, ElementName=Password}" Value="">
+                                        <DataTrigger  Binding="{Binding Password.Length}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger  Binding="{Binding Password.Length}" Value="0">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -162,6 +249,7 @@
                     Orientation="Horizontal"
                     Margin="0, 28, 0, 0">
                     <CheckBox
+                        Focusable="False"
                         Content="Запомнить меня"
                         FontSize="19"
                         Foreground="#f4f4f4"
@@ -169,17 +257,42 @@
                         VerticalContentAlignment="Stretch" 
                         Width="189"
                         Margin="12"
-                        IsChecked="{Binding Remember}"
-                        Command="{Binding CheckedRemember}"/>
+                        IsChecked="{Binding IsRemember}"/>
+                    <Button 
+                        Focusable="False"
+                        Command="{Binding RestoreUser}"
+                        IsEnabled="{Binding IsCanClick, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        Style="{StaticResource BackColor}"
+                        Background="#1E90FF"
+                        Foreground="#f4f4f4"
+                        Margin="12"
+                        BorderThickness="0">
+                        <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Restore"  HorizontalAlignment="Center" VerticalAlignment="Center" Height="28" Width="28"/>
+                        </TextBlock>
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="7"/>
+                            </Style>
+                        </Button.Resources>
+                        <Button.ToolTip>
+                            Обновить логин и пароль
+                        </Button.ToolTip>
+                        <Button.Effect>
+                            <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+                        </Button.Effect>
+                    </Button>
                     <Button
+                        Focusable="False"
+                        Command="{Binding OpenChat}"
+                        IsEnabled="{Binding IsCanClick, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        Style="{StaticResource BackColor}"
                         Content="Войти"
                         FontSize="19"
                         Background="#1E90FF"
                         Foreground="#f4f4f4"
                         BorderThickness="0"
-                        Padding="4"
-                        Margin="12"
-                        Command="{Binding OpenChat}">
+                        Margin="12">
                         <Button.Resources>
                             <Style TargetType="Border">
                                 <Setter Property="CornerRadius" Value="7"/>
@@ -190,14 +303,16 @@
                         </Button.Effect>
                     </Button>
                     <Button
-                        Content="Зарегистрироваться"
+                        Focusable="False"
+                        Command="{Binding OpenRegistration}"
+                        IsEnabled="{Binding IsCanClick, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        Style="{StaticResource BackColor}"
+                        Content="Регистрация"
                         FontSize="19"
                         Background="#1E90FF"
                         Foreground="#f4f4f4"
                         BorderThickness="0"
-                        Padding="4"
-                        Margin="12"
-                        Command="{Binding OpenRegistration}">
+                        Margin="12">
                         <Button.Resources>
                             <Style TargetType="Border">
                                 <Setter Property="CornerRadius" Value="7"/>
@@ -212,12 +327,45 @@
             </DockPanel>
         </Border>
 
+        <Button
+            Focusable="False"
+            Command="{Binding OpenServerSettings}"
+            HorizontalAlignment="Right"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Foreground="#1E90FF"
+            Background="#373737"
+            BorderThickness="0"
+            Margin="0,12,12,0" Height="56" VerticalAlignment="Top">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="ServerNetwork"  HorizontalAlignment="Center" VerticalAlignment="Center" Height="28" Width="28"/>
+                </TextBlock>
+                <Label
+                    DockPanel.Dock="Bottom"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    FontSize="12"
+                    Content="Сервер"
+                    Foreground="#1E90FF"
+                    FontWeight="Bold"/>
+            </DockPanel>
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+
         <Label
+            Focusable="False"
             HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
             HorizontalContentAlignment="Center"
             VerticalContentAlignment="Center"
             Foreground="#f4f4f4"
             Content="Клиент-серверный чат под Windows"/>
+
+        <ContentControl Focusable="False" Panel.ZIndex="0" Content="{Binding NewPage}"/>
     </Grid>
 </Window>

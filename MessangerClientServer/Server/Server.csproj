@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -31,10 +32,25 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\server.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AutoMapper, Version=10.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.10.0.0\lib\net461\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -43,11 +59,86 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessLogic\ChatService.cs" />
+    <Compile Include="BusinessLogic\UserService.cs" />
+    <Compile Include="DataTransferObject\UserDTO.cs" />
+    <Compile Include="EF\ChatDbContext.cs" />
+    <Compile Include="Interface\ICertainList.cs" />
+    <Compile Include="Interface\IRepository.cs" />
+    <Compile Include="Interface\IService.cs" />
+    <Compile Include="Migrations\202007181320178_AddChatMessage.cs" />
+    <Compile Include="Migrations\202007181320178_AddChatMessage.Designer.cs">
+      <DependentUpon>202007181320178_AddChatMessage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202007181420341_AddChatMessage%282%29.cs" />
+    <Compile Include="Migrations\202007181420341_AddChatMessage%282%29.Designer.cs">
+      <DependentUpon>202007181420341_AddChatMessage%282%29.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202008060952186_AddIndexMessageInChatMessage.cs" />
+    <Compile Include="Migrations\202008060952186_AddIndexMessageInChatMessage.Designer.cs">
+      <DependentUpon>202008060952186_AddIndexMessageInChatMessage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Repository\ChatMessageRepository.cs" />
+    <Compile Include="Repository\EFUnitOfWork.cs" />
+    <Compile Include="Repository\UserRepository.cs" />
+    <Compile Include="Interface\IHuman.cs" />
+    <Compile Include="Human\Man.cs" />
+    <Compile Include="Human\Woman.cs" />
+    <Compile Include="Model\ChatMessage.cs" />
+    <Compile Include="Network\Client.cs" />
+    <Compile Include="Migrations\202006082113183_InitialCreate.cs" />
+    <Compile Include="Migrations\202006082113183_InitialCreate.Designer.cs">
+      <DependentUpon>202006082113183_InitialCreate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202007091255146_AddGender.cs" />
+    <Compile Include="Migrations\202007091255146_AddGender.Designer.cs">
+      <DependentUpon>202007091255146_AddGender.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Model\User.cs" />
+    <Compile Include="BusinessLogic\SessionData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Network\ServerObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\202006082113183_InitialCreate.resx">
+      <DependentUpon>202006082113183_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202007091255146_AddGender.resx">
+      <DependentUpon>202007091255146_AddGender.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202007181320178_AddChatMessage.resx">
+      <DependentUpon>202007181320178_AddChatMessage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202007181420341_AddChatMessage%282%29.resx">
+      <DependentUpon>202007181420341_AddChatMessage%282%29.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202008060952186_AddIndexMessageInChatMessage.resx">
+      <DependentUpon>202008060952186_AddIndexMessageInChatMessage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ChatLibrary\ChatLibrary.csproj">
+      <Project>{ea18c035-3217-4acf-a2f9-b18ae4554d4d}</Project>
+      <Name>ChatLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\server.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
