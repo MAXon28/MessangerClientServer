@@ -4,13 +4,176 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:viewModel="clr-namespace:ChatClient.ViewModel"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
              d:DesignWidth="561" d:DesignHeight="728" Background="#373737" Visibility="{Binding Condition}">
     <UserControl.DataContext>
         <viewModel:MyPageViewModel/>
     </UserControl.DataContext>
 
-    <Grid>
+    <Grid
+        Margin="9">
+        <Grid.RowDefinitions>
+            <RowDefinition MinHeight="67"/>
+            <RowDefinition MinHeight="67"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
+        <Border 
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="0, 12, 0, 0"
+            BorderThickness="0, 0, 1, 1" 
+            BorderBrush="#1E90FF" 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Background="Black"
+            CornerRadius="9"
+            Padding="19">
+            <Button
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="#1E90FF"
+                Background="Transparent"
+                BorderThickness="0"
+                Content="Имя"
+                FontSize="28"
+                FontWeight="Bold"
+                Margin="12"
+                Command="{Binding RewriteName}"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
+
+        <Border 
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="0, 12, 0, 0"
+            BorderThickness="0, 0, 1, 1" 
+            BorderBrush="#1E90FF" 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Background="Black"
+            CornerRadius="9"
+            Padding="19">
+            <Button
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="#1E90FF"
+                Background="Transparent"
+                BorderThickness="0"
+                Content="Пол"
+                FontSize="28"
+                FontWeight="Bold"
+                Margin="12"
+                Command="{Binding RewriteGender}"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
+
+        <Rectangle 
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
+            Fill="#1E90FF"
+            Height="4"/>
+
+        <Border 
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="2"
+            BorderThickness="4" 
+            BorderBrush="#1E90FF" 
+            CornerRadius="360" 
+            Margin="1" 
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Width="328"
+            Height="328"
+            Background="Black"
+            Panel.ZIndex="1">
+            <TextBox
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                TextAlignment="Center"
+                TextWrapping="Wrap"
+                AcceptsReturn="True"
+                IsReadOnly="True"
+                Foreground="#1E90FF"
+                Background="Transparent"
+                BorderThickness="0"
+                Text="{Binding Name}"
+                FontSize="28"
+                FontWeight="Bold"
+                Margin="12"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="19" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
+
+        <Rectangle 
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Stretch"
+            Fill="#1E90FF"
+            Width="4"/>
+
+        <Border 
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="0, 0, 0, 12"
+            BorderThickness="0, 0, 1, 1" 
+            BorderBrush="#1E90FF" 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Background="Black"
+            CornerRadius="9"
+            Padding="19">
+            <Button
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="#1E90FF"
+                Background="Transparent"
+                BorderThickness="0"
+                Content="Логин"
+                FontSize="28"
+                FontWeight="Bold"
+                Margin="12"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
+
+        <Border 
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="0, 0, 0, 12"
+            BorderThickness="0, 0, 1, 1" 
+            BorderBrush="#1E90FF" 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Background="Black"
+            CornerRadius="9"
+            Padding="19">
+            <Button
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="#1E90FF"
+                Background="Transparent"
+                BorderThickness="0"
+                Content="Пароль"
+                FontSize="28"
+                FontWeight="Bold"
+                Margin="12"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+            </Border.Effect>
+        </Border>
     </Grid>
 </UserControl>

@@ -23,6 +23,7 @@ namespace ChatClient.ViewModel
         private ChatView _chatView;
         private ChatViewModel _chatViewModel;
         private MyPageViewModel _myPageViewModel;
+        private string _name;
 
         public MainChatPageViewModel() { }
 
@@ -44,22 +45,22 @@ namespace ChatClient.ViewModel
             });
             _notifier.ShowSuccess($"Добро пожаловать, {name}!");
 
-            Name = name;
-            _serverWorker = ServerWorker.NewInstance(); ;
+            _name = name;
+            _serverWorker = ServerWorker.NewInstance();
         }
-
-        public string Name { get; private set; }
 
         public ICommand OpenMyPage
         {
             get
             {
-                return new RelayCommand(() =>
+                return new RelayCommand(async() =>
                 {
+                    _name = _chatViewModel.Name;
                     _chatViewModel.Condition = "Collapsed";
                     MessagesContainer.SaveMessages();
-                    _myPageViewModel = new MyPageViewModel(_notifier);
+                    _myPageViewModel = new MyPageViewModel(_notifier, _name);
                     _serverWorker.RewriteDelegate(_myPageViewModel);
+                    await Task.Run(_serverWorker.EventOpenNewPage);
                     Content = new MyPageView();
                     Content.DataContext = _myPageViewModel;
                 });
@@ -70,13 +71,17 @@ namespace ChatClient.ViewModel
         {
             get
             {
-                return new RelayCommand( () =>
+                return new RelayCommand(async () =>
                 {
-                    //_myPageViewModel.Condition = "Collapsed";
+                    _name = _myPageViewModel.Name;
+                    _myPageViewModel.Condition = "Collapsed";
                     _chatViewModel.Condition = "Visible";
+                    _chatViewModel.Name = _name;
                     _serverWorker.RewriteDelegate(_chatViewModel);
+                    await Task.Run(_serverWorker.EventOpenNewPage);
                     Content = _chatView;
                     Content.DataContext = _chatViewModel;
+                    _chatViewModel.UsuallyLoad();
                 });
             }
         }
@@ -92,7 +97,7 @@ namespace ChatClient.ViewModel
         public async void StartLoad()
         {
             _chatView = new ChatView();
-            _chatViewModel = new ChatViewModel(_chatView, _notifier, Name);
+            _chatViewModel = new ChatViewModel(_chatView, _notifier, _name);
             await Task.Run(() => _chatViewModel.StartLoad());
             _serverWorker.RewriteDelegate(_chatViewModel);
             Content = _chatView;

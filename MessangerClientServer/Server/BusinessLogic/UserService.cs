@@ -19,9 +19,9 @@ namespace Server.BusinessLogic
             _efUnitOfWork = new EFUnitOfWork();
         }
 
-        public bool IsUniqueData(string login, string name)
+        public bool IsUniqueData(string login = "", string name = "")
         {
-            IEnumerable<User> users = _efUnitOfWork.Users.GetAll();
+            IEnumerable<User> users = _efUnitOfWork.UsersRepository.GetAll();
             if (users == null)
             {
                 return true;
@@ -49,14 +49,22 @@ namespace Server.BusinessLogic
                 PastOnline = null
             };
 
-            _efUnitOfWork.Users.Create(user);
+            _efUnitOfWork.UsersRepository.Create(user);
 
             SaveAsync();
         }
 
+        public async void UpdateUserAsync(int typeOfUpdate, Guid userId, string updateString)
+        {
+            if (typeOfUpdate == 1)
+            {
+                await Task.Run(() => _efUnitOfWork.Users.UpdateName(userId, updateString));
+            }
+        }
+
         public UserDTO ValidationData(string login, string password, ref Guid id)
         {
-            IEnumerable<User> users = _efUnitOfWork.Users.GetAll();
+            IEnumerable<User> users = _efUnitOfWork.UsersRepository.GetAll();
 
             if (users == null)
             {

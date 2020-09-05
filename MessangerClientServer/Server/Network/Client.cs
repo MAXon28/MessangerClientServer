@@ -18,7 +18,6 @@ namespace Server.Network
         private UserService _userService;
         private ChatService _chatService;
         private IHuman _human;
-        private ChatMessageDTO _pastMessage;
 
         public Client(Socket clientSocket, ServerObject server, UserService userService, Guid id, string gender, string name)
         {
@@ -40,6 +39,7 @@ namespace Server.Network
             Writer = new BinaryWriter(networkStream);
             Reader = new BinaryReader(networkStream);
             IsCanNextMessage = true;
+            UserActivePage = "Chat page";
             _server.AddConnection(this);
         }
 
@@ -51,7 +51,11 @@ namespace Server.Network
 
         public BinaryReader Reader { get; }
 
-        public bool IsCanNextMessage { get; set; }
+        public bool IsCanNextMessage { get; private set; }
+
+        public string UserActivePage { get; private set; }
+
+        public ChatMessageDTO PastMessage { get; set; }
 
         public void Process()
         {
@@ -72,6 +76,25 @@ namespace Server.Network
                                 break;
                             case 3:
                                 GetMessages();
+                                break;
+                            case 4:
+                                string newName = Reader.ReadString();
+                                if (_userService.IsUniqueData(name: newName))
+                                {
+                                    Name = newName;
+                                    _userService.UpdateUserAsync(1, Id, newName);
+                                    Writer.Write("40");
+                                    Writer.Write(Name);
+                                }
+                                else
+                                {
+                                    Writer.Write("41");
+                                }
+                                break;
+                            case 9:
+                                UserActivePage = UserActivePage == "Chat page" ? "No Chat page" : "Chat page";
+                                Writer.Write("");
+                                Writer.Flush();
                                 break;
                             case 12:
                                 IsCanNextMessage = Reader.ReadBoolean();
@@ -128,7 +151,7 @@ namespace Server.Network
             string message = Reader.ReadString();
             DateTime timeSendMessage = DateTime.Now; 
             _server.BroadcastMessageFromUser("30", Name, message, timeSendMessage.ToString(), Id);
-            _chatService.AddMessage(Id, timeSendMessage, message, Name);
+            PastMessage = _chatService.AddMessage(Id, timeSendMessage, message, Name);
         }
 
         private void GetMessages()
@@ -142,7 +165,7 @@ namespace Server.Network
                 var messages = (List<ChatMessageDTO>) formatter.Deserialize(strm);
                 (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(messages);
                 list = data.Item1;
-                _pastMessage = data.Item2 > 0 ? list[list.Count - 1] : null;
+                PastMessage = list.Count > 0 ? list[list.Count - 1] : messages[messages.Count - 1];
                 Writer.Write(data.Item2);
                 Writer.Flush();
             }
@@ -163,16 +186,16 @@ namespace Server.Network
                 Writer.Write("67");
                 Writer.Write(0);
                 Writer.Flush();
-                _pastMessage = list.Count > 0 ? list[list.Count - 1] : null;
+                PastMessage = list.Count > 0 ? list[list.Count - 1] : PastMessage;
             }
             else if(typeRequest == "New messages")
             {
-                if (_pastMessage.Id == Reader.ReadInt32())
+                if (PastMessage?.Id == Reader.ReadInt32())
                 {
-                    (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(_pastMessage);
+                    (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(PastMessage);
                     list = data.Item1;
-                    _pastMessage = data.Item2 > 0 ? list[list.Count - 1] : null;
-                    IsCanNextMessage = data.Item2 == 0;
+                    PastMessage = list.Count > 0 ? list[list.Count - 1] : PastMessage;
+                    IsCanNextMessage = list.Count < 4;
                     Writer.Write("67");
                     Writer.Write(data.Item2);
                     Writer.Flush();
@@ -187,7 +210,7 @@ namespace Server.Network
                 var message = (ChatMessageDTO)formatter.Deserialize(strm);
                 (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(message);
                 list = data.Item1;
-                _pastMessage = data.Item2 > 0 ? list[list.Count - 1] : null;
+                PastMessage = list.Count > 0 ? list[list.Count - 1] : message;
                 IsCanNextMessage = data.Item2 == 0;
                 Writer.Write("67");
                 Writer.Write(data.Item2);

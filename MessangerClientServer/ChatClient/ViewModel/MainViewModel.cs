@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Xml.Serialization;
 using ChatClient.Interface;
 using ChatClient.Logic;
 using ChatClient.Model;
@@ -163,7 +159,6 @@ namespace ChatClient.ViewModel
             if (resultCode == "28")
             {
                 MainChatPageViewModel mainChatPageViewModel = new MainChatPageViewModel(name);
-
                 NewPage = new MainChatPageView();
                 NewPage.DataContext = mainChatPageViewModel;
                 mainChatPageViewModel.StartLoad();

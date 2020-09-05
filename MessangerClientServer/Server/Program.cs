@@ -12,9 +12,7 @@ namespace Server
         static void Main(string[] args)
         {
             Console.Title = "Server";
-            Console.BackgroundColor = ConsoleColor.DarkGray;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.Clear();
 
             try
             {

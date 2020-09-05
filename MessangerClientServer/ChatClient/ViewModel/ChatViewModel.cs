@@ -36,7 +36,6 @@ namespace ChatClient.ViewModel
         private ChatView _chatView;
         private Notifier _notifier;
         private ServerWorker _serverWorker;
-        private string _name;
         private readonly Cache _cache = new Cache();
         private int _topID;
 
@@ -68,9 +67,8 @@ namespace ChatClient.ViewModel
             _chatView = chatView;
             _notifier = notifier;
             _serverWorker = ServerWorker.NewInstance();
-            _name = name;
+            Name = name;
 
-            Messages = new ObservableCollection<Message>();
             Condition = "Visible";
             Index = 0;
             IsFocus = true;
@@ -85,6 +83,7 @@ namespace ChatClient.ViewModel
 
         public void StartLoad()
         {
+            Messages = new ObservableCollection<Message>();
             List<Message> chatMessagesClient = MessagesContainer.GetMessages();
             List<ChatMessageDTO> chatMessagesServer = new List<ChatMessageDTO>();
             if (chatMessagesClient.Count > 0)
@@ -123,19 +122,30 @@ namespace ChatClient.ViewModel
                         SenderName = message.SenderName,
                         DateSend = message.DateSend,
                         SendMessage = message.SendMessage,
-                        IsItMe = message.SenderName == _name
+                        IsItMe = message.SenderName == Name
                     });
                     AddNewMessageIntContainerAndUpdateDateSend();
                 }
             }
         }
 
-        public ObservableCollection<Message> Messages { get; set; }
-
-        public void SetWorker(ServerWorker serverWorker)
+        public void UsuallyLoad()
         {
-            _serverWorker = serverWorker;
+            Messages = new ObservableCollection<Message>();
+            List<Message> chatMessagesClient = MessagesContainer.GetMessages();
+            foreach (var message in chatMessagesClient)
+            {
+                if (message.IsItMe && message.SenderName != Name)
+                {
+                    message.SenderName = Name;
+                }
+                message.DateSend = Day.GetParsedDate(message.DateSend);
+                Messages.Add(message);
+            }
+            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
         }
+
+        public ObservableCollection<Message> Messages { get; set; }
 
         public string Condition { get; set; }
 
@@ -152,6 +162,8 @@ namespace ChatClient.ViewModel
         public int CountNewMessages { get; set; }
 
         public double Opacity { get; set; }
+
+        public string Name { get; set; }
 
         public ICommand Send
         {
@@ -182,7 +194,7 @@ namespace ChatClient.ViewModel
                             Messages.Add(new Message()
                             {
                                 Id = Messages.Count > 0 ? Messages[Messages.Count - 1].Id + 1 : 1,
-                                SenderName = _name,
+                                SenderName = Name,
                                 DateSend = DateTime.Now.ToString(),
                                 SendMessage = Message,
                                 IsItMe = true
@@ -311,7 +323,6 @@ namespace ChatClient.ViewModel
                 Application.Current.Dispatcher.Invoke(LoadFromCache, DispatcherPriority.Background);
                 _countClickButtonToBottom = 0;
                 IsFocus = true;
-                return;
             }
             else if (_cache.IndexLevel > 0)
             {
@@ -332,7 +343,6 @@ namespace ChatClient.ViewModel
                 }
                 _countClickButtonToBottom = 0;
             }
-            _isGoToBottom = false;
         }
 
         private void LoadFromCache()
@@ -368,11 +378,20 @@ namespace ChatClient.ViewModel
                 case "31":
                     Application.Current.Dispatcher.Invoke(PastMessages, DispatcherPriority.Background);
                     break;
+                case "40":
+                    _notifier.ShowInformation("Имя пользователя изменено!");
+                    Name = binaryReader.ReadString();
+                    break;
+                case "41":
+                    _notifier.ShowInformation("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!");
+                    break;
                 case "67":
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         NewMessages(binaryReader);
                     }, DispatcherPriority.Background);
+                    break;
+                default:
                     break;
             }
         }
@@ -391,7 +410,7 @@ namespace ChatClient.ViewModel
                             SenderName = message.SenderName,
                             DateSend = message.DateSend,
                             SendMessage = message.SendMessage,
-                            IsItMe = message.SenderName == _name
+                            IsItMe = message.SenderName == Name
                         });
                         AddNewMessageIntContainerAndUpdateDateSend();
                     }
@@ -489,6 +508,7 @@ namespace ChatClient.ViewModel
             if (_isGoToBottom && CountNewMessages == 0)
             {
                 _chatView.Scroll();
+                _isGoToBottom = false;
             }
 
             if (_haveNewMessage)
@@ -496,7 +516,7 @@ namespace ChatClient.ViewModel
                 Messages.Add(new Message()
                 {
                     Id = Messages.Count > 0 ? Messages[Messages.Count - 1].Id + 1 : 1,
-                    SenderName = _name,
+                    SenderName = Name,
                     DateSend = DateTime.Now.ToString(),
                     SendMessage = Message,
                     IsItMe = true
@@ -530,7 +550,7 @@ namespace ChatClient.ViewModel
                         SenderName = list[i].SenderName,
                         DateSend = list[i].DateSend,
                         SendMessage = list[i].SendMessage,
-                        IsItMe = list[i].SenderName == _name
+                        IsItMe = list[i].SenderName == Name
                     });
                     if (typeOfLoadMessage == TypeOfLoadMessage.PastMessages)
                     {

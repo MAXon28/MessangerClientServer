@@ -8,7 +8,7 @@
     <ProjectGuid>{0C6A8F82-6F56-4838-AAC1-B17F3AC61353}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ChatClient</RootNamespace>
-    <AssemblyName>ChatClient</AssemblyName>
+    <AssemblyName>Bezu</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -176,6 +176,8 @@
     </Compile>
     <Compile Include="ViewModel\ChatViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ErrorDialogViewModel.cs" />
+    <Compile Include="ViewModel\Dialog\GenderDialogViewModel.cs" />
+    <Compile Include="ViewModel\Dialog\NameDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ServerDialogViewModel.cs" />
     <Compile Include="ViewModel\MainChatPageViewModel.cs" />
     <Compile Include="ViewModel\MyPageViewModel.cs" />
@@ -185,6 +187,12 @@
     </Compile>
     <Compile Include="View\Dialog\ErrorDialogView.xaml.cs">
       <DependentUpon>ErrorDialogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Dialog\GenderDialogView.xaml.cs">
+      <DependentUpon>GenderDialogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Dialog\NameDialogView.xaml.cs">
+      <DependentUpon>NameDialogView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Dialog\ServerDialogView.xaml.cs">
       <DependentUpon>ServerDialogView.xaml</DependentUpon>
@@ -203,6 +211,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\Dialog\ErrorDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Dialog\GenderDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Dialog\NameDialogView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

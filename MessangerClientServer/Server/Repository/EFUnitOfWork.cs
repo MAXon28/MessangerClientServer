@@ -17,7 +17,7 @@ namespace Server.Repository
             _db = new ChatDbContext();
         }
 
-        public IRepository<User> Users
+        public IRepository<User> UsersRepository
         {
             get
             {
@@ -30,7 +30,20 @@ namespace Server.Repository
             }
         }
 
-        public IRepository<ChatMessage> StandardMessages
+        public IUser<User> Users
+        {
+            get
+            {
+                if (_userRepository == null)
+                {
+                    _userRepository = new UserRepository(_db);
+                }
+
+                return _userRepository;
+            }
+        }
+
+        public IRepository<ChatMessage> MessagesRepository
         {
             get
             {

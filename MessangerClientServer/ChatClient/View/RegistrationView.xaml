@@ -419,8 +419,8 @@
                             FontSize="28"
                             Padding="3, 12, 12, 12"
                             Background="{Binding NameBack}"
-                            MaxLength="28"
-                            ToolTip="От 3 до 28 символов без пробелов"/>
+                            MaxLength="19"
+                            ToolTip="От 3 до 19 символов без пробелов"/>
                         <Label
                             Grid.Row="4"
                             Grid.Column="0"

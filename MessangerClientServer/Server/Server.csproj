@@ -66,6 +66,7 @@
     <Compile Include="Interface\ICertainList.cs" />
     <Compile Include="Interface\IRepository.cs" />
     <Compile Include="Interface\IService.cs" />
+    <Compile Include="Interface\IUser.cs" />
     <Compile Include="Migrations\202007181320178_AddChatMessage.cs" />
     <Compile Include="Migrations\202007181320178_AddChatMessage.Designer.cs">
       <DependentUpon>202007181320178_AddChatMessage.cs</DependentUpon>

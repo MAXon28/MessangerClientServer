@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Management.Instrumentation;
 using System.Net;
@@ -8,6 +9,8 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
+using System.Windows;
+using System.Windows.Threading;
 using ChatClient.Interface;
 using ChatClient.Model;
 using ChatLibrary;
@@ -23,7 +26,6 @@ namespace ChatClient.Logic
         private BinaryWriter _writer;
         private DelegateReceiveMessage _delegateReceiveMessage;
         private ServerConnection _serverConnection;
-        private Thread _thread;
 
         private ServerWorker()
         {
@@ -92,14 +94,24 @@ namespace ChatClient.Logic
             if (reader.ReadString() == "28")
             {
                 name = reader.ReadString();
-                _thread = new Thread(ReceiveMessage) { IsBackground = true };
-                _thread.Start();
+                var thread = new Thread(ReceiveMessage) { IsBackground = true };
+                thread.Start();
                 return "28";
             }
 
             _client.Shutdown(SocketShutdown.Both);
             _client.Close();
             return "34";
+        }
+
+        public void UpdateName(string name)
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(4);
+            writer.Write(name);
+            writer.Flush();
         }
 
         public (List<ChatMessageDTO>, int) GetMessagesStart(List<ChatMessageDTO> messages)
@@ -189,6 +201,15 @@ namespace ChatClient.Logic
             writer.Flush();
         }
 
+        public void EventOpenNewPage()
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(9);
+            writer.Flush();
+        }
+
         private void ReceiveMessage()
         {
             while (true)
@@ -199,10 +220,11 @@ namespace ChatClient.Logic
                     var networkStreamReader = new NetworkStream(_client);
                     var reader = new BinaryReader(networkStreamReader);
                     _delegateReceiveMessage?.Invoke(reader);
+                    Debug.WriteLine("Top!");
                 }
                 catch
                 {
-                    // ignored
+                    Debug.WriteLine("Error!");
                 }
             }
         }

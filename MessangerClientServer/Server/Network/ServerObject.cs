@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using ChatLibrary;
 using Server.BusinessLogic;
 using Server.DataTransferObject;
 using Server.Human;
@@ -155,18 +156,34 @@ namespace Server.Network
             {
                 if (_clients[i].Id != userGuidWhoSendMessage)
                 {
-                    if (_clients[i].IsCanNextMessage)
+                    if (_clients[i].UserActivePage == "Chat page")
                     {
-                        _clients[i].Writer.Write(code);
-                        _clients[i].Writer.Write(name);
-                        _clients[i].Writer.Write(message);
-                        _clients[i].Writer.Write(date);
-                        _clients[i].Writer.Flush();
+                        if (_clients[i].IsCanNextMessage)
+                        {
+                            _clients[i].Writer.Write(code);
+                            _clients[i].Writer.Write(name);
+                            _clients[i].Writer.Write(message);
+                            _clients[i].Writer.Write(date);
+                            _clients[i].Writer.Flush();
+                        }
+                        else
+                        {
+                            _clients[i].Writer.Write(code);
+                            _clients[i].Writer.Write("+1");
+                            _clients[i].Writer.Flush();
+                        }
+                        _clients[i].PastMessage = new ChatMessageDTO
+                        {
+                            Id = _clients[i].PastMessage.Id + 1,
+                            SenderName = name,
+                            SendMessage = message,
+                            DateSend = date
+                        };
                     }
                     else
                     {
                         _clients[i].Writer.Write(code);
-                        _clients[i].Writer.Write("+1");
+                        _clients[i].Writer.Write(name);
                         _clients[i].Writer.Flush();
                     }
                 }

@@ -26,16 +26,16 @@ namespace Server.BusinessLogic
             _sessionData = SessionData.NewInstance();
         }
 
-        public void AddMessage(Guid userId, DateTime timeSendMessage, string message, string name)
+        public ChatMessageDTO AddMessage(Guid userId, DateTime timeSendMessage, string message, string name)
         {
             var chatMessage = new ChatMessage
             {
-                IndexMessage = _efUnitOfWork.StandardMessages.GetAll().Count() + 1,
+                IndexMessage = _efUnitOfWork.MessagesRepository.GetAll().Count() + 1,
                 UserId = userId,
                 TimeSendMessage = timeSendMessage,
                 Message = message
             };
-            _efUnitOfWork.StandardMessages.Create(chatMessage);
+            _efUnitOfWork.MessagesRepository.Create(chatMessage);
 
             var chatMessageDTO = new ChatMessageDTO
             {
@@ -47,6 +47,8 @@ namespace Server.BusinessLogic
             _sessionData.DataMessages.Add(chatMessageDTO);
 
             SaveAsync();
+
+            return chatMessageDTO;
         }
 
         /// <summary>
@@ -59,7 +61,7 @@ namespace Server.BusinessLogic
             var list = new List<ChatMessageDTO>();
             if (_sessionData.DataMessages.Count == 0)
             {
-                List<ChatMessage> fullList = _efUnitOfWork.StandardMessages.GetAll().ToList();
+                List<ChatMessage> fullList = _efUnitOfWork.MessagesRepository.GetAll().ToList();
                 int lastIndex = fullList.Count >= 100 ? fullList.Count - 101 : -1;
                 for (int i = fullList.Count - 1; i > lastIndex; i--)
                 {

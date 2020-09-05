@@ -18,7 +18,7 @@ namespace ChatClient.View.Dialog
         {
             if (_serverDialogViewModel.IsTrueData())
             {
-                this.Close();
+                Close();
             }
         }
     }

@@ -13,6 +13,7 @@ namespace ChatClient.Logic
         private SQLiteConnection dataBase;
         private List<User> _users;
         private int _index;
+        private User _currentUser;
 
         public LogicDb()
         {
@@ -53,9 +54,9 @@ namespace ChatClient.Logic
         {
             if (_index < _users.Count)
             {
-                var user = _users[_index];
+                _currentUser = _users[_index];
                 _index++;
-                return (user.Login, user.Password);
+                return (_currentUser.Login, _currentUser.Password);
             }
             _index = 0;
             return GetSaveData();
