@@ -29,7 +29,7 @@ namespace Server.Human
 
         public ConsoleColor GetForeground()
         {
-            return ConsoleColor.Blue;
+            return ConsoleColor.DarkCyan;
         }
     }
 }

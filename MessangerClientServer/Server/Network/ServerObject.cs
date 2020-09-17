@@ -6,11 +6,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 using Server.BusinessLogic;
-using Server.DataTransferObject;
+using Server.Domain;
 using Server.Human;
-using Server.Interface;
 
 namespace Server.Network
 {
@@ -26,10 +25,14 @@ namespace Server.Network
             _userService = new UserService();
         }
 
+        public List<Client> Clients => _clients;
+
         internal void Listen()
         {
             try
             {
+                //SettingsService settingsService = new SettingsService(_userService.GetUnitOfWork());
+                //settingsService.AddNewUserSettings();
                 IPAddress[] IPs = Dns.GetHostAddresses(Dns.GetHostName());
                 Console.WriteLine($@"IP-адрес данного сервера: {IPs[IPs.Length - 1]}");
 
@@ -71,7 +74,7 @@ namespace Server.Network
                     else
                     {
                         Guid userId = new Guid();
-                        (string, UserDTO) resultAuth = Authorization(reader.ReadString(), reader.ReadString(), ref userId);
+                        (string, UserDomain) resultAuth = Authorization(reader.ReadString(), reader.ReadString(), ref userId);
 
                         var networkStreamWriter = new NetworkStream(tcpClient);
                         var writer = new BinaryWriter(networkStreamWriter);
@@ -85,6 +88,11 @@ namespace Server.Network
                             Console.WriteLine(" онлайн!");
 
                             writer.Write(resultAuth.Item2.Name);
+                            writer.Write(resultAuth.Item2.Gender);
+
+                            (int, string) settings = new SettingsService(_userService.GetUnitOfWork()).GetSettingsByUserId(userId);
+                            writer.Write(settings.Item1);
+                            writer.Write(settings.Item2);
 
                             Client client = new Client(tcpClient, this, _userService, userId, resultAuth.Item2.Gender, resultAuth.Item2.Name);
                             Thread threadClient = new Thread(client.Process);
@@ -113,16 +121,18 @@ namespace Server.Network
         {
             if (_userService.IsUniqueData(login, name))
             {
-                _userService.AddUser(login, password, gender, name);
+                Guid newUserId = _userService.AddUser(login, password, gender, name);
+                SettingsService settingsService = new SettingsService(_userService.GetUnitOfWork());
+                settingsService.AddNewUserSettings(newUserId);
                 return "27";
             }
 
             return "33";
         }
 
-        private (string, UserDTO) Authorization(string login, string password, ref Guid userId)
+        private (string, UserDomain) Authorization(string login, string password, ref Guid userId)
         {
-            UserDTO user = _userService.ValidationData(login, password, ref userId);
+            UserDomain user = _userService.ValidationData(login, password, ref userId);
 
             if (user != null)
             {
@@ -205,6 +215,7 @@ namespace Server.Network
 
             for (int i = 0; i < _clients.Count; i++)
             {
+                _userService.UpdatePastOnlineAsync(_clients[i].Id, DateTime.Now);
                 _clients[i].Close();
             }
             Environment.Exit(0); //завершение процесса

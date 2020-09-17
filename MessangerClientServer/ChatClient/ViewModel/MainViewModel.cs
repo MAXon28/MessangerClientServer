@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using ChatClient.Interface;
 using ChatClient.Logic;
+using ChatClient.Logic.UserLogic;
 using ChatClient.Model;
 using ChatClient.View;
 using ChatClient.View.Dialog;
@@ -131,23 +132,28 @@ namespace ChatClient.ViewModel
         {
             string resultCode = "";
             string name = "";
+            string gender = "";
             string login = Login ?? "";
             string password = new System.Net.NetworkCredential(string.Empty, Password).Password;
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 try
                 {
-                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name);
+                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name, ref gender);
                     if (resultCode == "28")
                     {
                         if (IsRemember)
                         {
-                            Task.Run(() => _logicDb.AddNewUser(login, password));
+                            await Task.Run(() => _logicDb.AddNewUser(login, password));
                         }
+                        UserContainer.Login = Login;
+                        UserContainer.Password = Password;
+                        UserContainer.Gender = gender;
                     }
                     else
                     {
                         IsNotAuthorization = true;
+                        await Task.Run(() => _logicDb.DeleteUser(login, password));
                     }
                 }
                 catch

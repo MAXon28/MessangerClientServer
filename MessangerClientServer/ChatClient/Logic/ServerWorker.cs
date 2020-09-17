@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Management.Instrumentation;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
-using System.Windows;
-using System.Windows.Threading;
 using ChatClient.Interface;
+using ChatClient.Logic.NotificationLogic;
 using ChatClient.Model;
 using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 
 namespace ChatClient.Logic
 {
@@ -23,7 +21,6 @@ namespace ChatClient.Logic
     {
         private static ServerWorker _serverWorker;
         private Socket _client;
-        private BinaryWriter _writer;
         private DelegateReceiveMessage _delegateReceiveMessage;
         private ServerConnection _serverConnection;
 
@@ -73,7 +70,7 @@ namespace ChatClient.Logic
             return int.Parse(answer.ToString());
         }
 
-        public string Authorization(string login, string password, ref string name)
+        public string Authorization(string login, string password, ref string name, ref string gender)
         {
             IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
             _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -94,8 +91,14 @@ namespace ChatClient.Logic
             if (reader.ReadString() == "28")
             {
                 name = reader.ReadString();
+                gender = reader.ReadString();
+
                 var thread = new Thread(ReceiveMessage) { IsBackground = true };
                 thread.Start();
+
+                SettingsContainer.TypeOfSoundAtNotificationNewMessage = reader.ReadInt32();
+                SettingsContainer.TypeOfNotification = reader.ReadString();
+
                 return "28";
             }
 
@@ -111,6 +114,45 @@ namespace ChatClient.Logic
 
             writer.Write(4);
             writer.Write(name);
+            writer.Flush();
+        }
+
+        public void UpdateGender(string gender)
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(5);
+            writer.Write(gender);
+            writer.Flush();
+        }
+
+        public void UpdateLogin(string login)
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(6);
+            writer.Write(login);
+            writer.Flush();
+        }
+
+        public void UpdatePassword(string password)
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(7);
+            writer.Write(password);
+            writer.Flush();
+        }
+
+        public void GetAlUsers()
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(10);
             writer.Flush();
         }
 

@@ -17,8 +17,16 @@ namespace Server.Repository
         }
 
         public IEnumerable<User> GetAll()
-        { 
-            return _chatDbContext.Users.Any() ? _chatDbContext.Users : null;
+        {
+            if (_chatDbContext.Users.Any())
+            {
+                return _chatDbContext.Users;
+            }
+            else
+            {
+                return null;
+            }
+            //return _chatDbContext.Users.Any() ? _chatDbContext.Users : null;
         }
 
         public void Create(User user)
@@ -30,6 +38,34 @@ namespace Server.Repository
         {
             User user = _chatDbContext.Users.Find(userId);
             user.Name = newName;
+            _chatDbContext.SaveChanges();
+        }
+
+        public void UpdateGender(Guid userId, string newGender)
+        {
+            User user = _chatDbContext.Users.Find(userId);
+            user.Gender = newGender;
+            _chatDbContext.SaveChanges();
+        }
+
+        public void UpdateLogin(Guid userId, string newLogin)
+        {
+            User user = _chatDbContext.Users.Find(userId);
+            user.Login = newLogin;
+            _chatDbContext.SaveChanges();
+        }
+
+        public void UpdatePassword(Guid userId, string newPassword)
+        {
+            User user = _chatDbContext.Users.Find(userId);
+            user.Password = newPassword;
+            _chatDbContext.SaveChanges();
+        }
+
+        public void UpdatePastOnline(Guid userId, DateTime newPastOnline)
+        {
+            User user = _chatDbContext.Users.Find(userId);
+            user.PastOnline = newPastOnline;
             _chatDbContext.SaveChanges();
         }
     }

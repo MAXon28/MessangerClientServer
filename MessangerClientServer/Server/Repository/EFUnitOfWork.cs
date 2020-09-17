@@ -2,7 +2,6 @@
 using Server.EF;
 using Server.Interface;
 using Server.Model;
-using Server.Repository;
 
 namespace Server.Repository
 {
@@ -11,6 +10,7 @@ namespace Server.Repository
         private ChatDbContext _db;
         private UserRepository _userRepository;
         private ChatMessageRepository _chatMessageRepository;
+        private SettingsRepository _settingsRepository;
 
         public EFUnitOfWork()
         {
@@ -66,6 +66,19 @@ namespace Server.Repository
                 }
 
                 return _chatMessageRepository;
+            }
+        }
+
+        public IRepository<Settings> SettingsRepository
+        {
+            get
+            {
+                if (_settingsRepository == null)
+                {
+                    _settingsRepository = new SettingsRepository(_db);
+                }
+
+                return _settingsRepository;
             }
         }
 

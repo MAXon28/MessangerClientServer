@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClient.ViewModel.Dialog"
         mc:Ignorable="d"
-        Title="Смена имени пользователя" Height="328" Width="528" Focusable="False" WindowStartupLocation="CenterScreen" Background="#373737" ResizeMode="NoResize">
+        Title="Изменение имени пользователя" Height="328" Width="528" Focusable="False" WindowStartupLocation="CenterScreen" Background="#373737" ResizeMode="NoResize">
 
     <Window.DataContext>
         <local:NameDialogViewModel/>
@@ -41,7 +41,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{Binding CurrentName, UpdateSourceTrigger=PropertyChanged}"
-                    MaxLength="3"
+                    MaxLength="19"
                     TextAlignment="Center"
                     FontSize="19"
                     Foreground="Black"

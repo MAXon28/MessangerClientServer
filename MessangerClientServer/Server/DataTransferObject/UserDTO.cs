@@ -2,7 +2,7 @@
 
 namespace Server.DataTransferObject
 {
-    class UserDTO
+    public class UserDTO
     {
         public Guid Id { get; set; }
 

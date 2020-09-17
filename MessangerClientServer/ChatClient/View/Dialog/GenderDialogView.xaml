@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClient.ViewModel.Dialog"
         mc:Ignorable="d"
-        Title="Изменение пола" Height="328" Width="528" Focusable="False" WindowStartupLocation="CenterScreen" Background="#373737" ResizeMode="NoResize">
+        Title="Изменение пола" Height="267" Width="528" Focusable="False" WindowStartupLocation="CenterScreen" Background="#373737" ResizeMode="NoResize">
 
     <Window.DataContext>
         <local:GenderDialogViewModel/>
@@ -155,18 +155,42 @@
     </Window.Resources>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="128"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Border
+            Grid.Row="0"
             Margin="28"
             BorderBrush="#1E90FF"
             BorderThickness="1.5"
-            Padding="0">
+            Padding="0"
+            CornerRadius="3">
             <ComboBox
                 Name="GenderIndex"
                 Style="{StaticResource RoundComboBoxGender}"
-                SelectedIndex="{Binding IndexGender}">
+                SelectedIndex="{Binding IndexGender, UpdateSourceTrigger=PropertyChanged}">
                 <TextBlock FontSize="28" Foreground="#f4f4f4">Мужской</TextBlock>
                 <TextBlock FontSize="28" Foreground="#f4f4f4">Женский</TextBlock>
             </ComboBox>
         </Border>
+
+        <Button
+            Command="{Binding Confirmation}"
+            Grid.Row="1"
+            Click="Confirm"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Foreground="#f4f4f4"
+            Background="#1E90FF"
+            Content="Подтвердить"
+            FontSize="19"
+            Padding="28, 7, 28, 7">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="3"/>
+                </Style>
+            </Button.Resources>
+        </Button>
     </Grid>
 </Window>

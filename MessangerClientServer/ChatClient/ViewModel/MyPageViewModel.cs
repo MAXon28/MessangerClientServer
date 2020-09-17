@@ -1,6 +1,9 @@
 ﻿using System.IO;
+using System.Media;
 using System.Windows.Input;
 using ChatClient.Interface;
+using ChatClient.Logic.NotificationLogic;
+using ChatClient.Logic.UserLogic;
 using ChatClient.View.Dialog;
 using ChatClient.ViewModel.Dialog;
 using GalaSoft.MvvmLight;
@@ -12,15 +15,12 @@ namespace ChatClient.ViewModel
 {
     class MyPageViewModel : ViewModelBase, IViewModel
     {
-        private Notifier _notifier;
-
         public MyPageViewModel() { }
 
-        public MyPageViewModel(Notifier notifier, string name)
+        public MyPageViewModel(string name)
         {
             Condition = "Visible";
 
-            _notifier = notifier;
             Name = name;
         }
 
@@ -35,7 +35,7 @@ namespace ChatClient.ViewModel
                 return new RelayCommand(() =>
                 {
                     NameDialogView nameDialogView = new NameDialogView(new NameDialogViewModel(Name));
-                    nameDialogView.Show();
+                    nameDialogView.ShowDialog();
                 });
             }
         }
@@ -52,25 +52,59 @@ namespace ChatClient.ViewModel
             }
         }
 
+        public ICommand RewriteLogin
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    LoginDialogView loginDialogView = new LoginDialogView(new LoginDialogViewModel());
+                    loginDialogView.ShowDialog();
+                });
+            }
+        }
+
+        public ICommand RewritePassword
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    PasswordDialogView passwordDialogView = new PasswordDialogView(new PasswordDialogViewModel());
+                    passwordDialogView.ShowDialog();
+                });
+            }
+        }
+
         public void Notification(BinaryReader binaryReader)
         {
             string test = binaryReader.ReadString();
             if (test == "29")
             {
-                _notifier.ShowInformation(binaryReader.ReadString());
+                NotificationTranslator.GetEnteringUserNotification(binaryReader.ReadString(), "Information");
             }
             else if (test == "30")
             {
-                _notifier.ShowInformation(binaryReader.ReadString());
+                NotificationTranslator.PlaySoundNotificationAsync();
+                NotificationTranslator.GetNewMessageNotification(binaryReader.ReadString());
             }
             else if (test == "40")
             {
-                _notifier.ShowInformation("Имя пользователя изменено!");
+                NotificationTranslator.RewriteDataNotification("Имя пользователя изменено!", "Success");
                 Name = binaryReader.ReadString();
             }
             else if (test == "41")
             {
-                _notifier.ShowInformation("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!");
+                NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!", "Error");
+            }
+            else if (test == "42")
+            {
+                NotificationTranslator.RewriteDataNotification("Логин пользователя изменён!", "Success");
+                UserContainer.Login = binaryReader.ReadString();
+            }
+            else if (test == "43")
+            {
+                NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегестрирован!", "Error");
             }
         }
     }

@@ -1,8 +1,7 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using ChatClient.Logic;
+using ChatClient.Logic.MessageLogic;
 using ChatClient.ViewModel;
 
 namespace ChatClient.View

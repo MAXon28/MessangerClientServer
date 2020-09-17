@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Server.DataTransferObject;
+using ChatLibrary.DataTransferObject;
+using Server.Domain;
 using Server.Interface;
 using Server.Model;
 using Server.Repository;
@@ -13,6 +14,11 @@ namespace Server.BusinessLogic
     class UserService : IService
     {
         private EFUnitOfWork _efUnitOfWork;
+
+        private const int UPDATE_NAME = 1;
+        private const int UPDATE_GENDER = 2;
+        private const int UPDATE_LOGIN = 3;
+        private const int UPDATE_PASSWORD = 4;
 
         public UserService()
         {
@@ -37,7 +43,7 @@ namespace Server.BusinessLogic
             return true;
         }
 
-        public void AddUser(string login, string password, string gender, string name)
+        public Guid AddUser(string login, string password, string gender, string name)
         {
             var user = new User
             {
@@ -51,20 +57,45 @@ namespace Server.BusinessLogic
 
             _efUnitOfWork.UsersRepository.Create(user);
 
-            SaveAsync();
+            return user.Id;
         }
 
         public async void UpdateUserAsync(int typeOfUpdate, Guid userId, string updateString)
         {
-            if (typeOfUpdate == 1)
+            switch (typeOfUpdate)
             {
-                await Task.Run(() => _efUnitOfWork.Users.UpdateName(userId, updateString));
+                case UPDATE_NAME:
+                    await Task.Run(() => _efUnitOfWork.Users.UpdateName(userId, updateString));
+                    break;
+                case UPDATE_GENDER:
+                    await Task.Run(() => _efUnitOfWork.Users.UpdateGender(userId, updateString));
+                    break;
+                case UPDATE_LOGIN:
+                    await Task.Run(() => _efUnitOfWork.Users.UpdateLogin(userId, updateString));
+                    break;
+                case UPDATE_PASSWORD:
+                    await Task.Run(() => _efUnitOfWork.Users.UpdatePassword(userId, updateString));
+                    break;
             }
         }
 
-        public UserDTO ValidationData(string login, string password, ref Guid id)
+        public async void UpdatePastOnlineAsync(Guid userId, DateTime date)
         {
-            IEnumerable<User> users = _efUnitOfWork.UsersRepository.GetAll();
+            await Task.Run(() => _efUnitOfWork.Users.UpdatePastOnline(userId, date));
+        }
+
+        public List<UserDTO> GetUsers()
+        {
+            List<User> users = (from u in _efUnitOfWork.UsersRepository.GetAll()
+                where u.PastOnline != null
+                select u).ToList();
+            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDTO>()).CreateMapper();
+            return (mapper.Map<List<User>, List<UserDTO>>(users));
+        }
+
+        public UserDomain ValidationData(string login, string password, ref Guid id)
+        {
+            IEnumerable<User> users = _efUnitOfWork.UsersRepository.GetAll() != null ? _efUnitOfWork.UsersRepository.GetAll() : null;
 
             if (users == null)
             {
@@ -77,9 +108,9 @@ namespace Server.BusinessLogic
 
             if (selectUsers.Count == 1)
             {
-                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDTO>()).CreateMapper();
+                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDomain>()).CreateMapper();
                 id = selectUsers[0].Id;
-                return mapper.Map<List<User>, List<UserDTO>>(selectUsers)[0];
+                return mapper.Map<List<User>, List<UserDomain>>(selectUsers)[0];
             }
 
             return null;

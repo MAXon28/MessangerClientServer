@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 using Server.BusinessLogic;
 using Server.Human;
 using Server.Interface;
@@ -17,7 +20,19 @@ namespace Server.Network
         private ServerObject _server;
         private UserService _userService;
         private ChatService _chatService;
+        private SettingsService _settingsService;
         private IHuman _human;
+
+        private const int WRITE_MESSAGE = 2;
+        private const int LOAD_MESSAGES = 3;
+        private const int REWRITE_USER_NAME = 4;
+        private const int REWRITE_USER_GENDER = 5;
+        private const int REWRITE_USER_LOGIN = 6;
+        private const int REWRITE_USER_PASSWORD = 7;
+        private const int EXIT = 8;
+        private const int NOTIFICATION_ABOUT_GO_TO_NEW_PAGE = 9;
+        private const int LOAD_USERS = 10;
+        private const int NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE = 12;
 
         public Client(Socket clientSocket, ServerObject server, UserService userService, Guid id, string gender, string name)
         {
@@ -25,15 +40,9 @@ namespace Server.Network
             _server = server;
             _userService = userService;
             _chatService = new ChatService(userService.GetUnitOfWork());
+            _settingsService = new SettingsService(_chatService.GetUnitOfWork());
             Id = id;
-            if (gender == "woman")
-            {
-                _human = new Woman();
-            }
-            else
-            {
-                _human = new Man();
-            }
+            SetGender(gender);
             Name = name;
             var networkStream = new NetworkStream(_clientSocket);
             Writer = new BinaryWriter(networkStream);
@@ -70,14 +79,14 @@ namespace Server.Network
                     {
                         switch (GetRequestCode())
                         {
-                            case 2:
+                            case WRITE_MESSAGE:
                                 GetNotification();
                                 SendMessage();
                                 break;
-                            case 3:
+                            case LOAD_MESSAGES:
                                 GetMessages();
                                 break;
-                            case 4:
+                            case REWRITE_USER_NAME:
                                 string newName = Reader.ReadString();
                                 if (_userService.IsUniqueData(name: newName))
                                 {
@@ -91,15 +100,58 @@ namespace Server.Network
                                     Writer.Write("41");
                                 }
                                 break;
-                            case 9:
+                            case REWRITE_USER_GENDER:
+                                string newGender = Reader.ReadString();
+                                SetGender(newGender);
+                                _userService.UpdateUserAsync(2, Id, newGender);
+                                break;
+                            case REWRITE_USER_LOGIN:
+                                string newLogin = Reader.ReadString();
+                                if (_userService.IsUniqueData(login: newLogin))
+                                {
+                                    _userService.UpdateUserAsync(3, Id, newLogin);
+                                    Writer.Write("42");
+                                    Writer.Write(newLogin);
+                                }
+                                else
+                                {
+                                    Writer.Write("43");
+                                }
+                                break;
+                            case REWRITE_USER_PASSWORD:
+                                _userService.UpdateUserAsync(4, Id, Reader.ReadString());
+                                break;
+                            case EXIT:
+                                _userService.UpdatePastOnlineAsync(Id, DateTime.Now);
+                                break;
+                            case NOTIFICATION_ABOUT_GO_TO_NEW_PAGE:
                                 UserActivePage = UserActivePage == "Chat page" ? "No Chat page" : "Chat page";
                                 Writer.Write("");
                                 Writer.Flush();
                                 break;
-                            case 12:
-                                IsCanNextMessage = Reader.ReadBoolean();
+                            case LOAD_USERS:
+                                List<UserDTO> users = _userService.GetUsers();
+                                List<Client> clients = _server.Clients;
+                                foreach (var client in clients)
+                                {
+                                    List<UserDTO> usersList = (from u in users
+                                        where u.Name == client.Name
+                                        select u).ToList();
+                                    if (usersList.Count == 1)
+                                    {
+                                        int indexUser = users.IndexOf(usersList[0]);
+                                        users[indexUser].PastOnline = null;
+                                    }
+                                }
+                                IFormatter formatter = new BinaryFormatter();
+                                NetworkStream strm = new NetworkStream(_clientSocket);
+                                Writer.Write("32");
+                                Writer.Flush();
+                                formatter.Serialize(strm, users);
+                                strm.Close();
                                 break;
-                            default:
+                            case NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE:
+                                IsCanNextMessage = Reader.ReadBoolean();
                                 break;
                         }
                     }
@@ -107,6 +159,7 @@ namespace Server.Network
                     {
                         message = GetNotification("Exit");
                         _server.BroadcastMessageAboutEnteringUser(message, Id, "29");
+                        _userService.UpdatePastOnlineAsync(Id, DateTime.Now);
                         break;
                     }
                 }
@@ -143,6 +196,18 @@ namespace Server.Network
         private void GetNotification()
         {
             _human.SendMessage(Name);
+        }
+
+        private void SetGender(string gender)
+        {
+            if (gender == "woman")
+            {
+                _human = new Woman();
+            }
+            else
+            {
+                _human = new Man();
+            }
         }
 
         private void SendMessage()

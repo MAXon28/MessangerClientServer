@@ -161,13 +161,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Logic\Cache.cs" />
-    <Compile Include="Logic\MessagesContainer.cs" />
+    <Compile Include="Logic\MessageLogic\Cache.cs" />
+    <Compile Include="Logic\MessageLogic\MessagesContainer.cs" />
+    <Compile Include="Logic\NotificationLogic\NotificationTranslator.cs" />
+    <Compile Include="Logic\NotificationLogic\SettingsContainer.cs" />
+    <Compile Include="Logic\UserLogic\UserContainer.cs" />
     <Compile Include="Model\Message.cs" />
     <Compile Include="Model\ServerConnection.cs" />
     <Compile Include="Interface\IHash.cs" />
     <Compile Include="Interface\IViewModel.cs" />
-    <Compile Include="Logic\LogicDb.cs" />
+    <Compile Include="Logic\UserLogic\LogicDb.cs" />
     <Compile Include="Logic\ServerWorker.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -177,11 +180,15 @@
     <Compile Include="ViewModel\ChatViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ErrorDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\GenderDialogViewModel.cs" />
+    <Compile Include="ViewModel\Dialog\LoginDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\NameDialogViewModel.cs" />
+    <Compile Include="ViewModel\Dialog\PasswordDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ServerDialogViewModel.cs" />
+    <Compile Include="ViewModel\List\UserViewModel.cs" />
     <Compile Include="ViewModel\MainChatPageViewModel.cs" />
     <Compile Include="ViewModel\MyPageViewModel.cs" />
     <Compile Include="ViewModel\RegistrationViewModel.cs" />
+    <Compile Include="ViewModel\UsersPageViewModel.cs" />
     <Compile Include="View\ChatView.xaml.cs">
       <DependentUpon>ChatView.xaml</DependentUpon>
     </Compile>
@@ -191,8 +198,14 @@
     <Compile Include="View\Dialog\GenderDialogView.xaml.cs">
       <DependentUpon>GenderDialogView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\Dialog\LoginDialogView.xaml.cs">
+      <DependentUpon>LoginDialogView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\Dialog\NameDialogView.xaml.cs">
       <DependentUpon>NameDialogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Dialog\PasswordDialogView.xaml.cs">
+      <DependentUpon>PasswordDialogView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Dialog\ServerDialogView.xaml.cs">
       <DependentUpon>ServerDialogView.xaml</DependentUpon>
@@ -206,6 +219,9 @@
     <Compile Include="View\RegistrationView.xaml.cs">
       <DependentUpon>RegistrationView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\UsersPageView.xaml.cs">
+      <DependentUpon>UsersPageView.xaml</DependentUpon>
+    </Compile>
     <Page Include="View\ChatView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -218,7 +234,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\Dialog\LoginDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\Dialog\NameDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Dialog\PasswordDialogView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -249,6 +273,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\RegistrationView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\UsersPageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -301,6 +329,28 @@
       <Name>ChatLibrary</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Vkontakte.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Iphone.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Aska.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WhatsUpAndroid.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WhatsUpIphone.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Telegram.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Classmates.wav" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

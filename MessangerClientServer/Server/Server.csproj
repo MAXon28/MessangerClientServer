@@ -60,42 +60,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\ChatService.cs" />
+    <Compile Include="BusinessLogic\SettingsService.cs" />
     <Compile Include="BusinessLogic\UserService.cs" />
-    <Compile Include="DataTransferObject\UserDTO.cs" />
+    <Compile Include="Domain\UserDomain.cs" />
     <Compile Include="EF\ChatDbContext.cs" />
     <Compile Include="Interface\ICertainList.cs" />
     <Compile Include="Interface\IRepository.cs" />
     <Compile Include="Interface\IService.cs" />
     <Compile Include="Interface\IUser.cs" />
-    <Compile Include="Migrations\202007181320178_AddChatMessage.cs" />
-    <Compile Include="Migrations\202007181320178_AddChatMessage.Designer.cs">
-      <DependentUpon>202007181320178_AddChatMessage.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202007181420341_AddChatMessage%282%29.cs" />
-    <Compile Include="Migrations\202007181420341_AddChatMessage%282%29.Designer.cs">
-      <DependentUpon>202007181420341_AddChatMessage%282%29.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202008060952186_AddIndexMessageInChatMessage.cs" />
-    <Compile Include="Migrations\202008060952186_AddIndexMessageInChatMessage.Designer.cs">
-      <DependentUpon>202008060952186_AddIndexMessageInChatMessage.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Model\Settings.cs" />
     <Compile Include="Repository\ChatMessageRepository.cs" />
     <Compile Include="Repository\EFUnitOfWork.cs" />
+    <Compile Include="Repository\SettingsRepository.cs" />
     <Compile Include="Repository\UserRepository.cs" />
     <Compile Include="Interface\IHuman.cs" />
     <Compile Include="Human\Man.cs" />
     <Compile Include="Human\Woman.cs" />
     <Compile Include="Model\ChatMessage.cs" />
     <Compile Include="Network\Client.cs" />
-    <Compile Include="Migrations\202006082113183_InitialCreate.cs" />
-    <Compile Include="Migrations\202006082113183_InitialCreate.Designer.cs">
-      <DependentUpon>202006082113183_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202007091255146_AddGender.cs" />
-    <Compile Include="Migrations\202007091255146_AddGender.Designer.cs">
-      <DependentUpon>202007091255146_AddGender.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\User.cs" />
     <Compile Include="BusinessLogic\SessionData.cs" />
     <Compile Include="Program.cs" />
@@ -112,21 +94,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\202006082113183_InitialCreate.resx">
-      <DependentUpon>202006082113183_InitialCreate.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202007091255146_AddGender.resx">
-      <DependentUpon>202007091255146_AddGender.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202007181320178_AddChatMessage.resx">
-      <DependentUpon>202007181320178_AddChatMessage.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202007181420341_AddChatMessage%282%29.resx">
-      <DependentUpon>202007181420341_AddChatMessage%282%29.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202008060952186_AddIndexMessageInChatMessage.resx">
-      <DependentUpon>202008060952186_AddIndexMessageInChatMessage.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -141,5 +108,6 @@
   <ItemGroup>
     <None Include="Resources\server.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

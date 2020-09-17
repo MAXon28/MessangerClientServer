@@ -12,13 +12,15 @@ using System.Windows.Threading;
 using AutoMapper;
 using ChatClient.Interface;
 using ChatClient.Logic;
+using ChatClient.Logic.MessageLogic;
+using ChatClient.Logic.NotificationLogic;
+using ChatClient.Logic.UserLogic;
 using ChatClient.Model;
 using ChatClient.View;
 using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
-using ToastNotifications;
-using ToastNotifications.Messages;
 
 namespace ChatClient.ViewModel
 {
@@ -34,7 +36,6 @@ namespace ChatClient.ViewModel
     class ChatViewModel : ViewModelBase, IViewModel
     {
         private ChatView _chatView;
-        private Notifier _notifier;
         private ServerWorker _serverWorker;
         private readonly Cache _cache = new Cache();
         private int _topID;
@@ -61,11 +62,10 @@ namespace ChatClient.ViewModel
 
         public ChatViewModel() { }
 
-        public ChatViewModel(ChatView chatView, Notifier notifier, string name)
+        public ChatViewModel(ChatView chatView, string name)
         {
 
             _chatView = chatView;
-            _notifier = notifier;
             _serverWorker = ServerWorker.NewInstance();
             Name = name;
 
@@ -142,7 +142,11 @@ namespace ChatClient.ViewModel
                 message.DateSend = Day.GetParsedDate(message.DateSend);
                 Messages.Add(message);
             }
-            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+
+            if (Messages.Count > 0)
+            {
+                _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+            }
         }
 
         public ObservableCollection<Message> Messages { get; set; }
@@ -367,7 +371,7 @@ namespace ChatClient.ViewModel
             switch (code)
             {
                 case "29":
-                    _notifier.ShowInformation(binaryReader.ReadString());
+                    NotificationTranslator.GetEnteringUserNotification(binaryReader.ReadString(), "Information");
                     break;
                 case "30":
                     Application.Current.Dispatcher.Invoke(() =>
@@ -379,11 +383,18 @@ namespace ChatClient.ViewModel
                     Application.Current.Dispatcher.Invoke(PastMessages, DispatcherPriority.Background);
                     break;
                 case "40":
-                    _notifier.ShowInformation("Имя пользователя изменено!");
+                    NotificationTranslator.RewriteDataNotification("Имя пользователя изменено!", "Success");
                     Name = binaryReader.ReadString();
                     break;
                 case "41":
-                    _notifier.ShowInformation("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!");
+                    NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!", "Error");
+                    break;
+                case "42":
+                    NotificationTranslator.RewriteDataNotification("Логин пользователя изменён!", "Success");
+                    UserContainer.Login = binaryReader.ReadString();
+                    break;
+                case "43":
+                    NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегестрирован!", "Error");
                     break;
                 case "67":
                     Application.Current.Dispatcher.Invoke(() =>

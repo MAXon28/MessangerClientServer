@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 using Server.Model;
 using Server.Repository;
-using ChatLibrary;
 using Server.Interface;
 
 namespace Server.BusinessLogic

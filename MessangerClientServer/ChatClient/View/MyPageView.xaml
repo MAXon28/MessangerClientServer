@@ -144,7 +144,8 @@
                 Content="Логин"
                 FontSize="28"
                 FontWeight="Bold"
-                Margin="12"/>
+                Margin="12"
+                Command="{Binding RewriteLogin}"/>
             <Border.Effect>
                 <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
             </Border.Effect>
@@ -170,7 +171,8 @@
                 Content="Пароль"
                 FontSize="28"
                 FontWeight="Bold"
-                Margin="12"/>
+                Margin="12"
+                Command="{Binding RewritePassword}"/>
             <Border.Effect>
                 <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
             </Border.Effect>

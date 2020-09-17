@@ -48,7 +48,7 @@ namespace ChatClient.ViewModel.Dialog
 
         public bool IsTrueData()
         {
-            if (string.IsNullOrEmpty(NewName))
+            if (string.IsNullOrEmpty(NewName) || NewName.Length < 3)
             {
                 return false;
             }

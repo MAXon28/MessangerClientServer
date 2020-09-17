@@ -10,5 +10,7 @@ namespace Server.EF
         public DbSet<User> Users { get; set; }
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
+
+        public DbSet<Settings> Settings { get; set; }
     }
 }

@@ -1,68 +1,105 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using ChatClient.Interface;
 using ChatClient.Logic;
+using ChatClient.Logic.MessageLogic;
+using ChatClient.Logic.NotificationLogic;
 using ChatClient.View;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
-using ToastNotifications;
-using ToastNotifications.Lifetime;
-using ToastNotifications.Messages;
-using ToastNotifications.Position;
 
 namespace ChatClient.ViewModel
 {
     class MainChatPageViewModel : ViewModelBase, IViewModel
     {
-        private Notifier _notifier;
         private ServerWorker _serverWorker;
         private ChatView _chatView;
         private ChatViewModel _chatViewModel;
-        private MyPageViewModel _myPageViewModel;
-        private string _name;
+        private IViewModel _currentViewModel;
 
-        public MainChatPageViewModel() { }
+        public MainChatPageViewModel()
+        {
+        }
 
         public MainChatPageViewModel(string name)
         {
-            _notifier = new Notifier(cfg =>
-            {
-                cfg.PositionProvider = new WindowPositionProvider(
-                    parentWindow: Application.Current.MainWindow,
-                    corner: Corner.BottomLeft,
-                    offsetX: 3,
-                    offsetY: 167);
+            NotificationTranslator.CreateNotifier();
+            NotificationTranslator.GetEnteringUserNotification($"Добро пожаловать, {name}!", "Success");
 
-                cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
-                    notificationLifetime: TimeSpan.FromSeconds(3),
-                    maximumNotificationCount: MaximumNotificationCount.FromCount(3));
-
-                cfg.Dispatcher = Application.Current.Dispatcher;
-            });
-            _notifier.ShowSuccess($"Добро пожаловать, {name}!");
-
-            _name = name;
+            Name = name;
             _serverWorker = ServerWorker.NewInstance();
+
+            Condition = "Visible";
+
+            LoadEnable(true, true, false, true, true);
         }
+
+        public string Condition { get; set; }
+
+        public string Name { get; set; }
+
+        public bool IsCanClickMyPage { get; set; }
+
+        public bool IsCanClickAllUsers { get; set; }
+
+        public bool IsCanClickChat { get; set; }
+
+        public bool IsCanClickMiniGame { get; set; }
+
+        public bool IsCanClickSettings { get; set; }
 
         public ICommand OpenMyPage
         {
             get
             {
+                return new RelayCommand(async () =>
+                {
+                    Name = _currentViewModel.Name;
+                    _currentViewModel.Condition = "Collapsed";
+                    if (_currentViewModel is ChatViewModel)
+                    {
+                        MessagesContainer.SaveMessages();
+                    }
+
+                    var myPageViewModel = new MyPageViewModel(Name);
+                    _currentViewModel = myPageViewModel;
+                    _serverWorker.RewriteDelegate(myPageViewModel);
+                    await Task.Run(_serverWorker.EventOpenNewPage);
+
+                    Content = new MyPageView();
+                    Content.DataContext = myPageViewModel;
+
+                    LoadEnable(false, true, true, true, true);
+                });
+            }
+        }
+
+        public ICommand OpenAllUsers
+        {
+            get
+            {
                 return new RelayCommand(async() =>
                 {
-                    _name = _chatViewModel.Name;
-                    _chatViewModel.Condition = "Collapsed";
-                    MessagesContainer.SaveMessages();
-                    _myPageViewModel = new MyPageViewModel(_notifier, _name);
-                    _serverWorker.RewriteDelegate(_myPageViewModel);
+                    Name = _currentViewModel.Name;
+                    _currentViewModel.Condition = "Collapsed";
+                    if (_currentViewModel is ChatViewModel)
+                    {
+                        MessagesContainer.SaveMessages();
+                    }
+
+                    var usersPageViewModel = new UsersPageViewModel(Name);
+                    _currentViewModel = usersPageViewModel;
+                    _serverWorker.RewriteDelegate(usersPageViewModel);
                     await Task.Run(_serverWorker.EventOpenNewPage);
-                    Content = new MyPageView();
-                    Content.DataContext = _myPageViewModel;
+
+                    Content = new UsersPageView();
+                    Content.DataContext = usersPageViewModel;
+
+                    await Task.Run(_serverWorker.GetAlUsers);
+
+                    LoadEnable(true, false, true, true, true);
                 });
             }
         }
@@ -73,15 +110,20 @@ namespace ChatClient.ViewModel
             {
                 return new RelayCommand(async () =>
                 {
-                    _name = _myPageViewModel.Name;
-                    _myPageViewModel.Condition = "Collapsed";
+                    Name = _currentViewModel.Name;
+                    _currentViewModel.Condition = "Collapsed";
+
                     _chatViewModel.Condition = "Visible";
-                    _chatViewModel.Name = _name;
+                    _chatViewModel.Name = Name;
+                    _currentViewModel = _chatViewModel;
                     _serverWorker.RewriteDelegate(_chatViewModel);
                     await Task.Run(_serverWorker.EventOpenNewPage);
+
                     Content = _chatView;
                     Content.DataContext = _chatViewModel;
                     _chatViewModel.UsuallyLoad();
+
+                    LoadEnable(true, true, false, true, true);
                 });
             }
         }
@@ -91,19 +133,29 @@ namespace ChatClient.ViewModel
         public void Notification(BinaryReader binaryReader)
         {
             string code = binaryReader.ReadString();
-            _notifier.ShowInformation(binaryReader.ReadString());
+            //_notifier.ShowInformation(binaryReader.ReadString());
         }
 
         public async void StartLoad()
         {
             _chatView = new ChatView();
-            _chatViewModel = new ChatViewModel(_chatView, _notifier, _name);
+            _chatViewModel = new ChatViewModel(_chatView, Name);
+            _currentViewModel = _chatViewModel;
             await Task.Run(() => _chatViewModel.StartLoad());
             _serverWorker.RewriteDelegate(_chatViewModel);
             Content = _chatView;
             Content.DataContext = _chatViewModel;
 
             _chatView.ScrollStart();
+        }
+
+        private void LoadEnable(bool isCanClickMyPage, bool isCanClickAllUsers, bool isCanClickChat, bool isCanClickMiniGame, bool isCanClickSettings)
+        {
+            IsCanClickMyPage = isCanClickMyPage;
+            IsCanClickAllUsers = isCanClickAllUsers;
+            IsCanClickChat = isCanClickChat;
+            IsCanClickMiniGame = isCanClickMiniGame;
+            IsCanClickSettings = isCanClickSettings;
         }
     }
 }
