@@ -13,5 +13,7 @@ namespace ChatClient.ViewModel.List
         /// Когда был онлайн
         /// </summary>
         public string PastDateOnline { get; set; }
+
+        public string Visibility { get; set; }
     }
 }

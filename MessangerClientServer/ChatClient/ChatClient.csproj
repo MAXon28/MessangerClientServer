@@ -179,11 +179,14 @@
     </Compile>
     <Compile Include="ViewModel\ChatViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ErrorDialogViewModel.cs" />
+    <Compile Include="ViewModel\Dialog\GameDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\GenderDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\LoginDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\NameDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\PasswordDialogViewModel.cs" />
     <Compile Include="ViewModel\Dialog\ServerDialogViewModel.cs" />
+    <Compile Include="ViewModel\Game\GameMainPageViewModel.cs" />
+    <Compile Include="ViewModel\Game\GamePlayViewModel.cs" />
     <Compile Include="ViewModel\List\UserViewModel.cs" />
     <Compile Include="ViewModel\MainChatPageViewModel.cs" />
     <Compile Include="ViewModel\MyPageViewModel.cs" />
@@ -194,6 +197,9 @@
     </Compile>
     <Compile Include="View\Dialog\ErrorDialogView.xaml.cs">
       <DependentUpon>ErrorDialogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Dialog\GameDialogView.xaml.cs">
+      <DependentUpon>GameDialogView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Dialog\GenderDialogView.xaml.cs">
       <DependentUpon>GenderDialogView.xaml</DependentUpon>
@@ -209,6 +215,12 @@
     </Compile>
     <Compile Include="View\Dialog\ServerDialogView.xaml.cs">
       <DependentUpon>ServerDialogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Game\GameMainPageView.xaml.cs">
+      <DependentUpon>GameMainPageView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Game\GamePlayView.xaml.cs">
+      <DependentUpon>GamePlayView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\MainChatPageView.xaml.cs">
       <DependentUpon>MainChatPageView.xaml</DependentUpon>
@@ -230,6 +242,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\Dialog\GameDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\Dialog\GenderDialogView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -247,6 +263,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\Dialog\ServerDialogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Game\GameMainPageView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Game\GamePlayView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

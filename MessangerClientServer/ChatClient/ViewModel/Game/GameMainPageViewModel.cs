@@ -1,26 +1,37 @@
-﻿using System.IO;
-using System.Media;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq.Expressions;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 using ChatClient.Interface;
+using ChatClient.Logic;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Logic.UserLogic;
-using ChatClient.View.Dialog;
-using ChatClient.ViewModel.Dialog;
+using ChatClient.View.Game;
+using ChatClient.ViewModel.List;
+using ChatLibrary;
+using ChatLibrary.DataTransferObject;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
-using ToastNotifications;
-using ToastNotifications.Messages;
 
-namespace ChatClient.ViewModel
+namespace ChatClient.ViewModel.Game
 {
-    class MyPageViewModel : ViewModelBase, IViewModel
+    class GameMainPageViewModel : ViewModelBase, IViewModel
     {
-        public MyPageViewModel() { }
+        private ServerWorker _serverWorker;
 
-        public MyPageViewModel(string name)
+        public GameMainPageViewModel() { }
+
+        public GameMainPageViewModel(string name)
         {
+            _serverWorker = ServerWorker.NewInstance();
             Condition = "Visible";
-
             Name = name;
         }
 
@@ -28,53 +39,26 @@ namespace ChatClient.ViewModel
 
         public string Name { get; set; }
 
-        public ICommand RewriteName
+        public ICommand PlayWithUser
         {
             get
             {
-                return new RelayCommand(() =>
+                return new RelayCommand(async () =>
                 {
-                    NameDialogView nameDialogView = new NameDialogView(new NameDialogViewModel(Name));
-                    nameDialogView.ShowDialog();
+                    var gamePlayViewModel = new GamePlayViewModel(Name);
+                    _serverWorker.RewriteDelegate(gamePlayViewModel);
+                    await Task.Run(() => _serverWorker.EventOpenNewPage());
+                    Game = new GamePlayView();
+                    Game.DataContext = gamePlayViewModel;
+                    await Task.Run(_serverWorker.SearchGamer);
+                    ViewModel = gamePlayViewModel;
                 });
             }
         }
 
-        public ICommand RewriteGender
-        {
-            get
-            {
-                return new RelayCommand(() =>
-                {
-                    GenderDialogView genderDialogView = new GenderDialogView(new GenderDialogViewModel());
-                    genderDialogView.ShowDialog();
-                });
-            }
-        }
+        public FrameworkElement Game { get; set; }
 
-        public ICommand RewriteLogin
-        {
-            get
-            {
-                return new RelayCommand(() =>
-                {
-                    LoginDialogView loginDialogView = new LoginDialogView(new LoginDialogViewModel());
-                    loginDialogView.ShowDialog();
-                });
-            }
-        }
-
-        public ICommand RewritePassword
-        {
-            get
-            {
-                return new RelayCommand(() =>
-                {
-                    PasswordDialogView passwordDialogView = new PasswordDialogView(new PasswordDialogViewModel());
-                    passwordDialogView.ShowDialog();
-                });
-            }
-        }
+        public GamePlayViewModel ViewModel { get; private set; }
 
         public void Notification(BinaryReader binaryReader)
         {

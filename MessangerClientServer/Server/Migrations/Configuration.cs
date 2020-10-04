@@ -10,7 +10,6 @@ namespace Server.Migrations
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
-            ContextKey = "Server.ChatDbContext";
         }
 
         protected override void Seed(Server.EF.ChatDbContext context)

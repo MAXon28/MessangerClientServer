@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="Bezu" Width="728" Height="728" MinWidth="555" MinHeight="667" WindowStartupLocation="CenterScreen" Background="#373737">
+        Title="Bezu" Width="728" Height="728" MinWidth="567" MinHeight="667" WindowStartupLocation="CenterScreen" Background="#373737">
 
     <Window.Resources>
         <Style TargetType="{x:Type CheckBox}">

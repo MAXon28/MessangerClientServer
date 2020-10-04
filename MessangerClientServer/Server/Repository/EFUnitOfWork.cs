@@ -10,6 +10,7 @@ namespace Server.Repository
         private ChatDbContext _db;
         private UserRepository _userRepository;
         private ChatMessageRepository _chatMessageRepository;
+        private GameRepository _gameRepository;
         private SettingsRepository _settingsRepository;
 
         public EFUnitOfWork()
@@ -66,6 +67,19 @@ namespace Server.Repository
                 }
 
                 return _chatMessageRepository;
+            }
+        }
+
+        public IRepository<GameStatistic> GameRepository
+        {
+            get
+            {
+                if (_gameRepository == null)
+                {
+                    _gameRepository = new GameRepository(_db);
+                }
+
+                return _gameRepository;
             }
         }
 

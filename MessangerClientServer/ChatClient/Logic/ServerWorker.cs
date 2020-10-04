@@ -21,6 +21,7 @@ namespace ChatClient.Logic
     {
         private static ServerWorker _serverWorker;
         private Socket _client;
+        private Thread _listenerThread;
         private DelegateReceiveMessage _delegateReceiveMessage;
         private ServerConnection _serverConnection;
 
@@ -36,6 +37,19 @@ namespace ChatClient.Logic
                 _serverWorker = new ServerWorker();
             }
             return _serverWorker;
+        }
+
+        public void Close()
+        {
+            _listenerThread.Abort();
+            NetworkStream?.Close();
+            _client.Shutdown(SocketShutdown.Both);
+            _client.Close();
+        }
+
+        public static void SetNull()
+        {
+            _serverWorker = null;
         }
 
         public int Registration(string login, string password, string gender, string name)
@@ -93,8 +107,8 @@ namespace ChatClient.Logic
                 name = reader.ReadString();
                 gender = reader.ReadString();
 
-                var thread = new Thread(ReceiveMessage) { IsBackground = true };
-                thread.Start();
+                _listenerThread = new Thread(ReceiveMessage) { IsBackground = true };
+                _listenerThread.Start();
 
                 SettingsContainer.TypeOfSoundAtNotificationNewMessage = reader.ReadInt32();
                 SettingsContainer.TypeOfNotification = reader.ReadString();
@@ -147,7 +161,7 @@ namespace ChatClient.Logic
             writer.Flush();
         }
 
-        public void GetAlUsers()
+        public void GetAllUsers()
         {
             NetworkStream = new NetworkStream(_client);
             var writer = new BinaryWriter(NetworkStream);
@@ -172,6 +186,7 @@ namespace ChatClient.Logic
             int count = reader.ReadInt32();
 
             var list = (List<ChatMessageDTO>)formatter.Deserialize(networkStream);
+
             return (list, count);
         }
 
@@ -243,12 +258,50 @@ namespace ChatClient.Logic
             writer.Flush();
         }
 
-        public void EventOpenNewPage()
+        public void SearchGamer()
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(11);
+            writer.Flush();
+        }
+
+        public void SendPlayerSMove(string square)
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(110);
+            writer.Write(square);
+            writer.Flush();
+        }
+
+        public void OutTheGame()
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(111);
+            writer.Flush();
+        }
+
+        public void EventOpenNewPage(string information = "No Chat page")
         {
             var networkStreamToWrite = new NetworkStream(_client);
             var writer = new BinaryWriter(networkStreamToWrite);
 
             writer.Write(9);
+            writer.Write(information);
+            writer.Flush();
+        }
+
+        public void Exit()
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(8);
             writer.Flush();
         }
 

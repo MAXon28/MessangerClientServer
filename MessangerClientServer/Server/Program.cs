@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Server.Network;
 
 namespace Server
 {
     class Program
     {
-        static ServerObject server;
-        static Thread listenThread;
+        static ServerObject _server;
+        static Thread _listenThread;
 
         static void Main(string[] args)
         {
@@ -16,13 +18,13 @@ namespace Server
 
             try
             {
-                server = new ServerObject();
-                listenThread = new Thread(new ThreadStart(server.Listen));
-                listenThread.Start(); //старт потока
+                _server = new ServerObject();
+                _listenThread = new Thread(new ThreadStart(_server.Listen));
+                _listenThread.Start(); //старт потока
             }
             catch (Exception ex)
             {
-                server.Disconnect();
+                _server.Disconnect();
                 Console.WriteLine(ex.Message);
             }
         }

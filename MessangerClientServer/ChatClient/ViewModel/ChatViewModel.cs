@@ -402,8 +402,6 @@ namespace ChatClient.ViewModel
                         NewMessages(binaryReader);
                     }, DispatcherPriority.Background);
                     break;
-                default:
-                    break;
             }
         }
 

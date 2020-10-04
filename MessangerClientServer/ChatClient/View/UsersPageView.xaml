@@ -111,19 +111,108 @@
     <Grid
         Margin="9">
         <Grid.RowDefinitions>
+            <RowDefinition Height="91"/>
             <RowDefinition Height="67"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ItemsControl
+
+        <StackPanel 
+            Grid.Row="0"
+            Orientation="Horizontal"
+            Margin="7, 5, 0, 5">
+            <Button
+                Margin="5, 5, 3, 5"
+                Foreground="#f4f4f4"
+                Background="#1E90FF"
+                Command="{Binding AllUsers}"
+                Style="{x:Null}">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="5"></Setter>
+                    </Style>
+                </Button.Resources>
+                <TextBlock
+                    Background="Transparent"
+                    Text="Все пользователи"
+                    TextWrapping="Wrap"
+                    FontSize="16"
+                    FontWeight="DemiBold"
+                    TextAlignment="Center"
+                    Margin="12"/>
+            </Button>
+            <Button
+                Margin="5"
+                Foreground="#f4f4f4"
+                Background="#1E90FF"
+                MaxWidth="140"
+                Command="{Binding OnlineUsers}"
+                Style="{x:Null}">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="5"></Setter>
+                    </Style>
+                </Button.Resources>
+                <TextBlock
+                    Background="Transparent"
+                    Text="Пользователи онлайн"
+                    TextWrapping="Wrap"
+                    FontSize="16"
+                    FontWeight="DemiBold"
+                    TextAlignment="Center"
+                    Margin="12"/>
+            </Button>
+        </StackPanel>
+
+        <TextBox 
+            Grid.Row="1"
+            Text="{Binding TextSearch, UpdateSourceTrigger=PropertyChanged}"
+            IsTabStop="False"
+            Height="40" 
+            Name="Search"
+            BorderThickness="0" 
+            FontSize="19" 
+            Margin="14, 0, 9, 0"
+            Padding="7, 7">
+            <TextBox.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </TextBox.Resources>
+        </TextBox>
+        <TextBlock
+            Grid.Row="1"
+            Focusable="False"
+            Text="Поиск..."
+            IsHitTestVisible="False" 
+            VerticalAlignment="Center" 
+            Foreground="Gray"
+            FontSize="19" 
+            Height="40"
+            Margin="23,13,28,14"
+            Padding="0, 7">
+            <TextBlock.Style>
+                <Style TargetType="{x:Type TextBlock}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger  Binding="{Binding Text, ElementName=Search}" Value="">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <ListView
             Focusable="False"
             IsTabStop="False"
-            Grid.Row="1"
+            Grid.Row="2"
             BorderThickness="0"
             ItemsSource="{Binding Users, UpdateSourceTrigger=PropertyChanged}"
             Margin="0, 5, 0, 0"
             VirtualizingStackPanel.IsVirtualizing="True"
-            VirtualizingStackPanel.ScrollUnit="Pixel">
-            <ItemsControl.Resources>
+            VirtualizingStackPanel.ScrollUnit="Pixel"
+            Background="Transparent">
+            <ListView.Resources>
                 <Style TargetType="ListViewItem">
                     <Setter Property="Template">
                         <Setter.Value>
@@ -143,20 +232,32 @@
                 </Style>
                 <Style TargetType="ScrollViewer">
                     <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
-                    <Setter Property="CanContentScroll" Value="False"/>
+                    <Setter Property="CanContentScroll" Value="True"/>
                 </Style>
-            </ItemsControl.Resources>
-            <ItemsControl.ItemsPanel>
+            </ListView.Resources>
+            <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <VirtualizingStackPanel VerticalAlignment="Stretch"/>
                 </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border
+                        Name="UserCard"
+                        Visibility="{Binding Visibility, UpdateSourceTrigger=PropertyChanged}"
                         Background="#2F4F4F"
                         Margin="9"
                         CornerRadius="7">
+                        <Border.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger  Binding="{Binding Visibility, ElementName=UserCard}" Value="Collapsed">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Resources>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition MaxWidth="167"/>
@@ -216,7 +317,7 @@
                         </Grid>
                     </Border>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>    
+            </ListView.ItemTemplate>
+        </ListView>    
     </Grid>
 </UserControl>

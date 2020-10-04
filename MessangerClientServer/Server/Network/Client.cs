@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using ChatLibrary;
 using ChatLibrary.DataTransferObject;
 using Server.BusinessLogic;
+using Server.Game;
 using Server.Human;
 using Server.Interface;
 
@@ -21,6 +22,7 @@ namespace Server.Network
         private UserService _userService;
         private ChatService _chatService;
         private SettingsService _settingsService;
+        private GameLogic _gameLogic;
         private IHuman _human;
 
         private const int WRITE_MESSAGE = 2;
@@ -32,7 +34,10 @@ namespace Server.Network
         private const int EXIT = 8;
         private const int NOTIFICATION_ABOUT_GO_TO_NEW_PAGE = 9;
         private const int LOAD_USERS = 10;
+        private const int PLAY_GAME = 11;
         private const int NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE = 12;
+        private const int PlLAYER_S_MOVE = 110;
+        private const int OUT_THE_GAME = 111;
 
         public Client(Socket clientSocket, ServerObject server, UserService userService, Guid id, string gender, string name)
         {
@@ -122,10 +127,11 @@ namespace Server.Network
                                 _userService.UpdateUserAsync(4, Id, Reader.ReadString());
                                 break;
                             case EXIT:
-                                _userService.UpdatePastOnlineAsync(Id, DateTime.Now);
+                                _server.RemoveConnection(Id);
+                                Close();
                                 break;
                             case NOTIFICATION_ABOUT_GO_TO_NEW_PAGE:
-                                UserActivePage = UserActivePage == "Chat page" ? "No Chat page" : "Chat page";
+                                UserActivePage = Reader.ReadString();
                                 Writer.Write("");
                                 Writer.Flush();
                                 break;
@@ -150,13 +156,26 @@ namespace Server.Network
                                 formatter.Serialize(strm, users);
                                 strm.Close();
                                 break;
+                            case PLAY_GAME:
+                                SearchAnyGamersAsync();
+                                break;
                             case NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE:
                                 IsCanNextMessage = Reader.ReadBoolean();
+                                break;
+                            case PlLAYER_S_MOVE:
+                                string stringPosition = Reader.ReadString();
+                                int row = stringPosition[0] - '0';
+                                int column = stringPosition[1] - '0';
+                                _gameLogic.Move(row, column);
+                                break;
+                            case OUT_THE_GAME:
+                                ExitFromGame();
                                 break;
                         }
                     }
                     catch
                     {
+                        ExitFromGame();
                         message = GetNotification("Exit");
                         _server.BroadcastMessageAboutEnteringUser(message, Id, "29");
                         _userService.UpdatePastOnlineAsync(Id, DateTime.Now);
@@ -301,6 +320,71 @@ namespace Server.Network
             Writer?.Close();
             Reader?.Close();
             _clientSocket?.Close();
+        }
+
+        private async void SearchAnyGamersAsync()
+        {
+            string str = await GameCenter.ConnectAsync(this);
+            if (str != "")
+            {
+                if (str == "Have gamer")
+                {
+                    Writer.Write("1-11");
+                    Writer.Write(_gameLogic.FirstGamer != this ? _gameLogic.FirstGamer.Name : _gameLogic.SecondGamer.Name);
+                    Writer.Write(_gameLogic.FirstGamer == this ? _gameLogic.FirstGamerSymbol : _gameLogic.SecondGamerSymbol);
+                    Console.WriteLine("Топчик!");
+                }
+                else if (str == "Have not gamer")
+                {
+                    Writer.Write("2-11");
+                    Console.WriteLine("Никто не хочет пока играть!");
+                }
+                Writer.Flush();
+            }
+            else
+            {
+                Console.WriteLine("Ожидающий игрок вышел!");
+            }
+        }
+
+        public void SetGameLogic(GameLogic gameLogic)
+        {
+            _gameLogic = gameLogic;
+        }
+
+        public void GameOpponentMove(string position)
+        {
+            Writer.Write("11-0");
+            Writer.Write(position);
+            Writer.Flush();
+        }
+
+        public void GameOver(string typeOfGameOver, string reasonGameOver)
+        {
+            Writer.Write(typeOfGameOver);
+            Writer.Write(reasonGameOver);
+            Writer.Flush();
+            _gameLogic = null;
+        }
+
+        public void EarlyVictory()
+        {
+            Writer.Write("11-4");
+            Writer.Flush();
+            _gameLogic = null;
+        }
+
+        private void ExitFromGame()
+        {
+            if (_gameLogic == null)
+            {
+                GameCenter.OutTheGame(this);
+            }
+            else
+            {
+                _gameLogic.EarlyGameOver(this);
+                _gameLogic = null;
+            }
         }
     }
 }

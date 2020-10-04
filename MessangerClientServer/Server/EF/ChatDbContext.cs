@@ -11,6 +11,8 @@ namespace Server.EF
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
 
+        public DbSet<GameStatistic> GameStatistics { get; set; }
+
         public DbSet<Settings> Settings { get; set; }
     }
 }

@@ -51,7 +51,7 @@
                     <RowDefinition MaxHeight="67"/>
                     <RowDefinition MaxHeight="67"/>
                     <RowDefinition MaxHeight="67"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Button
                     Grid.Row="0"
@@ -136,6 +136,22 @@
                             <materialDesign:PackIcon Kind="Settings" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </InlineUIContainer></TextBlock>
                         <TextBlock Text="Настройки" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
+                    </StackPanel>
+                </Button>
+                <Button 
+                    Grid.Row="5"
+                    Command="{Binding Exit}"
+                    Focusable="False"
+                    Background="#373737" 
+                    BorderThickness="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Margin="9, 4, 0, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"><InlineUIContainer>
+                            <materialDesign:PackIcon Kind="ExitRun" Foreground="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </InlineUIContainer></TextBlock>
+                        <TextBlock Text="Выход" Foreground="#f4f4f4" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="9, 9, 9, 9"/>
                     </StackPanel>
                 </Button>
             </Grid>

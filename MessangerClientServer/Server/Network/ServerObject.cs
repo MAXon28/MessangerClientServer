@@ -31,8 +31,6 @@ namespace Server.Network
         {
             try
             {
-                //SettingsService settingsService = new SettingsService(_userService.GetUnitOfWork());
-                //settingsService.AddNewUserSettings();
                 IPAddress[] IPs = Dns.GetHostAddresses(Dns.GetHostName());
                 Console.WriteLine($@"IP-адрес данного сервера: {IPs[IPs.Length - 1]}");
 
@@ -122,7 +120,9 @@ namespace Server.Network
             if (_userService.IsUniqueData(login, name))
             {
                 Guid newUserId = _userService.AddUser(login, password, gender, name);
-                SettingsService settingsService = new SettingsService(_userService.GetUnitOfWork());
+                GameService gameService = new GameService(_userService.GetUnitOfWork());
+                gameService.AddGamer(newUserId);
+                SettingsService settingsService = new SettingsService(gameService.GetUnitOfWork());
                 settingsService.AddNewUserSettings(newUserId);
                 return "27";
             }
@@ -215,7 +215,6 @@ namespace Server.Network
 
             for (int i = 0; i < _clients.Count; i++)
             {
-                _userService.UpdatePastOnlineAsync(_clients[i].Id, DateTime.Now);
                 _clients[i].Close();
             }
             Environment.Exit(0); //завершение процесса

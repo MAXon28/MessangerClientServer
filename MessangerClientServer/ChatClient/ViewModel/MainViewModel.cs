@@ -139,6 +139,7 @@ namespace ChatClient.ViewModel
             {
                 try
                 {
+                    _serverWorker = ServerWorker.NewInstance();
                     resultCode = _serverWorker.Authorization(login, GetHash(password), ref name, ref gender);
                     if (resultCode == "28")
                     {

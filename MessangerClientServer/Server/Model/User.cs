@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Model
@@ -17,5 +18,18 @@ namespace Server.Model
         public string Name { get; set; }
 
         public DateTime? PastOnline { get; set; }
+
+        public virtual ICollection<ChatMessage> Messages { get; set; }
+
+        public virtual ICollection<GameStatistic> GameStatistics { get; set; }
+
+        public virtual ICollection<Settings> Settings { get; set; }
+
+        public User()
+        {
+            Messages = new List<ChatMessage>();
+            GameStatistics = new List<GameStatistic>();
+            Settings = new List<Settings>();
+        }
     }
 }
