@@ -37,7 +37,7 @@ namespace ChatClient.ViewModel
     {
         private ChatView _chatView;
         private ServerWorker _serverWorker;
-        private readonly Cache _cache = new Cache();
+        private readonly Cache _cache;
         private int _topID;
 
         /// <summary>
@@ -67,6 +67,7 @@ namespace ChatClient.ViewModel
 
             _chatView = chatView;
             _serverWorker = ServerWorker.NewInstance();
+            _cache = new Cache(name);
             Name = name;
 
             Condition = "Visible";
@@ -81,26 +82,32 @@ namespace ChatClient.ViewModel
             _countClickButtonToBottom = 0;
         }
 
-        public void StartLoad()
+        public void StartLoad(bool isHavePastMessage)
         {
             Messages = new ObservableCollection<Message>();
-            List<Message> chatMessagesClient = MessagesContainer.GetMessages();
+            MessagesContainer.OpenContainer(Name);
             List<ChatMessageDTO> chatMessagesServer = new List<ChatMessageDTO>();
-            if (chatMessagesClient.Count > 0)
+            if (isHavePastMessage)
             {
-                _topID = chatMessagesClient[0].Id;
-                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<Message, ChatMessageDTO>()).CreateMapper();
-                (List<ChatMessageDTO>, int) data = _serverWorker.GetMessagesStart(mapper.Map<List<Message>, List<ChatMessageDTO>>(chatMessagesClient));
+                (List<ChatMessageDTO>, int, int) data = _serverWorker.GetMessagesStartWithPastMessage();
                 chatMessagesServer = data.Item1;
-                foreach (var message in chatMessagesClient)
+                _topID = chatMessagesServer[0].Id;
+                for (int i = 0; i < data.Item3; i++)
                 {
-                    message.DateSend = Day.GetParsedDate(message.DateSend);
-                    Messages.Add(message);
+                    Messages.Add(new Message
+                    {
+                        Id = chatMessagesServer[i].Id,
+                        SenderName = chatMessagesServer[i].SenderName,
+                        DateSend = chatMessagesServer[i].DateSend,
+                        SendMessage = chatMessagesServer[i].SendMessage,
+                        IsItMe = chatMessagesServer[i].SenderName == Name
+                    });
+                    AddNewMessageIntContainerAndUpdateDateSend();
                 }
-                if (chatMessagesServer.Count > 0)
+                if (chatMessagesServer.Count > data.Item3)
                 {
                     _typeOfSource = 1;
-                    TestAsync(chatMessagesServer, data.Item2, chatMessagesClient.Count - 1);
+                    MessagesLoadAsync(chatMessagesServer.Skip(data.Item3).ToList(), data.Item2, data.Item3 - 1);
                 }
                 else
                 {
@@ -347,6 +354,10 @@ namespace ChatClient.ViewModel
                 }
                 _countClickButtonToBottom = 0;
             }
+            else
+            {
+                _isGoToBottom = false;
+            }
         }
 
         private void LoadFromCache()
@@ -405,7 +416,7 @@ namespace ChatClient.ViewModel
             }
         }
 
-        private async void TestAsync(List<ChatMessageDTO> chatMessagesServer, int count, int index)
+        private async void MessagesLoadAsync(List<ChatMessageDTO> chatMessagesServer, int count, int index)
         {
             await Task.Run(() =>
             {

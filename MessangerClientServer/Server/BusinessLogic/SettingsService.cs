@@ -42,6 +42,20 @@ namespace Server.BusinessLogic
             return (settings.TypeOfSoundAtNotificationNewMessage, settings.TypeOfNotification);
         }
 
+        public void UpdateData(Guid userId, object updateData)
+        {
+            if (updateData is int sound)
+            {
+                _efUnitOfWork.SettingsUpdate.UpdateTypeOfSoundAtNotificationNewMessage(userId, sound);
+                return;
+            }
+
+            if (updateData is string notification)
+            {
+                _efUnitOfWork.SettingsUpdate.UpdateTypeOfNotification(userId, notification);
+            }
+        }
+
         public EFUnitOfWork GetUnitOfWork()
         {
             return  _efUnitOfWork;

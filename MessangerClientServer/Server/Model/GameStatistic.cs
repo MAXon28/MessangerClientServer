@@ -14,9 +14,13 @@ namespace Server.Model
 
         public int WinWithUsers { get; set; }
 
+        public int LoseWithUsers { get; set; }
+
         public int AllGameWithComputer { get; set; }
 
         public int WinWithComputer { get; set; }
+
+        public int LoseWithComputer { get; set; }
 
         public virtual User User { get; set; }
     }

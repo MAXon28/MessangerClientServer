@@ -13,5 +13,7 @@ namespace Server.Interface
         void UpdatePassword(Guid userId, string newPassword);
 
         void UpdatePastOnline(Guid userId, DateTime newPastOnline);
+
+        void UpdateMessageId(Guid userId, int messageId);
     }
 }

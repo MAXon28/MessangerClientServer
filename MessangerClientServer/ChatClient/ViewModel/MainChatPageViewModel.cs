@@ -6,7 +6,6 @@ using ChatClient.Interface;
 using ChatClient.Logic;
 using ChatClient.Logic.MessageLogic;
 using ChatClient.Logic.NotificationLogic;
-using ChatClient.Logic.UserLogic;
 using ChatClient.View;
 using ChatClient.View.Dialog;
 using ChatClient.View.Game;
@@ -67,7 +66,7 @@ namespace ChatClient.ViewModel
                     else if (_currentViewModel is GameMainPageViewModel)
                     {
                         var gameViewModel = (GameMainPageViewModel) _currentViewModel;
-                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed")
+                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed" && !gameViewModel.ViewModel.IsVisibleCancel)
                         {
                             if (gameViewModel.ViewModel.IsVisibleGame)
                             {
@@ -78,7 +77,14 @@ namespace ChatClient.ViewModel
                                 {
                                     return;
                                 }
-                                await Task.Run(_serverWorker.OutTheGame);
+                                if (gameViewModel.ViewModel.TypeOfGame == "With user")
+                                {
+                                    await Task.Run(_serverWorker.OutTheGame);
+                                }
+                                else
+                                {
+                                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                                }
                             }
                             else if (gameViewModel.ViewModel.IsVisibleSpinner)
                             {
@@ -116,7 +122,7 @@ namespace ChatClient.ViewModel
                     else if (_currentViewModel is GameMainPageViewModel)
                     {
                         var gameViewModel = (GameMainPageViewModel)_currentViewModel;
-                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed")
+                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed" && !gameViewModel.ViewModel.IsVisibleCancel)
                         {
                             if (gameViewModel.ViewModel.IsVisibleGame)
                             {
@@ -127,7 +133,14 @@ namespace ChatClient.ViewModel
                                 {
                                     return;
                                 }
-                                await Task.Run(_serverWorker.OutTheGame);
+                                if (gameViewModel.ViewModel.TypeOfGame == "With user")
+                                {
+                                    await Task.Run(_serverWorker.OutTheGame);
+                                }
+                                else
+                                {
+                                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                                }
                             }
                             else if (gameViewModel.ViewModel.IsVisibleSpinner)
                             {
@@ -163,7 +176,7 @@ namespace ChatClient.ViewModel
                     if (_currentViewModel is GameMainPageViewModel)
                     {
                         var gameViewModel = (GameMainPageViewModel)_currentViewModel;
-                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed")
+                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed" && !gameViewModel.ViewModel.IsVisibleCancel)
                         {
                             if (gameViewModel.ViewModel.IsVisibleGame)
                             {
@@ -174,7 +187,14 @@ namespace ChatClient.ViewModel
                                 {
                                     return;
                                 }
-                                await Task.Run(_serverWorker.OutTheGame);
+                                if (gameViewModel.ViewModel.TypeOfGame == "With user")
+                                {
+                                    await Task.Run(_serverWorker.OutTheGame);
+                                }
+                                else
+                                {
+                                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                                }
                             }
                             else if (gameViewModel.ViewModel.IsVisibleSpinner)
                             {
@@ -226,6 +246,62 @@ namespace ChatClient.ViewModel
             }
         }
 
+        public ICommand OpenSettings
+        {
+            get
+            {
+                return new RelayCommand( async () =>
+                {
+                    Name = _currentViewModel.Name;
+                    if (_currentViewModel is ChatViewModel)
+                    {
+                        MessagesContainer.SaveMessages();
+                    }
+                    else if (_currentViewModel is GameMainPageViewModel)
+                    {
+                        var gameViewModel = (GameMainPageViewModel)_currentViewModel;
+                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed" && !gameViewModel.ViewModel.IsVisibleCancel)
+                        {
+                            if (gameViewModel.ViewModel.IsVisibleGame)
+                            {
+                                var gameDialogViewModel = new GameDialogViewModel();
+                                var gameDialogView = new GameDialogView(gameDialogViewModel);
+                                gameDialogView.ShowDialog();
+                                if (gameDialogViewModel.UserResponse != "Да")
+                                {
+                                    return;
+                                }
+                                if (gameViewModel.ViewModel.TypeOfGame == "With user")
+                                {
+                                    await Task.Run(_serverWorker.OutTheGame);
+                                }
+                                else
+                                {
+                                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                                }
+                            }
+                            else if (gameViewModel.ViewModel.IsVisibleSpinner)
+                            {
+                                await Task.Run(_serverWorker.OutTheGame);
+                            }
+                        }
+                    }
+
+                    _currentViewModel.Condition = "Collapsed";
+
+                    var settingsPageViewModel = new SettingsPageViewModel(Name);
+                    _currentViewModel = settingsPageViewModel;
+                    _serverWorker.RewriteDelegate(settingsPageViewModel);
+                    await Task.Run(() => _serverWorker.EventOpenNewPage());
+
+                    Content = new SettingsPageView();
+                    Content.DataContext = settingsPageViewModel;
+
+                    LoadEnable(true, true, true, true, false);
+                });
+            }
+        }
+
         public ICommand Exit
         {
             get
@@ -239,7 +315,7 @@ namespace ChatClient.ViewModel
                     else if (_currentViewModel is GameMainPageViewModel)
                     {
                         var gameViewModel = (GameMainPageViewModel)_currentViewModel;
-                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed")
+                        if (gameViewModel.ViewModel != null && gameViewModel.ViewModel.Condition != "Collapsed" && !gameViewModel.ViewModel.IsVisibleCancel)
                         {
                             if (gameViewModel.ViewModel.IsVisibleGame)
                             {
@@ -251,7 +327,14 @@ namespace ChatClient.ViewModel
                                     return;
                                 }
 
-                                await Task.Run(_serverWorker.OutTheGame);
+                                if (gameViewModel.ViewModel.TypeOfGame == "With user")
+                                {
+                                    await Task.Run(_serverWorker.OutTheGame);
+                                }
+                                else
+                                {
+                                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                                }
                             }
                             else if (gameViewModel.ViewModel.IsVisibleSpinner)
                             {
@@ -271,15 +354,15 @@ namespace ChatClient.ViewModel
 
         public void Notification(BinaryReader binaryReader)
         {
-            
+            //ignore
         }
 
-        public async void StartLoad()
+        public async void StartLoad(bool isHavePastMessage)
         {
             _chatView = new ChatView();
             _chatViewModel = new ChatViewModel(_chatView, Name);
             _currentViewModel = _chatViewModel;
-            await Task.Run(() => _chatViewModel.StartLoad());
+            await Task.Run(() => _chatViewModel.StartLoad(isHavePastMessage));
             _serverWorker.RewriteDelegate(_chatViewModel);
             Content = _chatView;
             Content.DataContext = _chatViewModel;

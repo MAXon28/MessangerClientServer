@@ -28,7 +28,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationRevision>2</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -161,6 +161,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Logic\GameLogic\Computer.cs" />
+    <Compile Include="Logic\GameLogic\GameLogic.cs" />
     <Compile Include="Logic\MessageLogic\Cache.cs" />
     <Compile Include="Logic\MessageLogic\MessagesContainer.cs" />
     <Compile Include="Logic\NotificationLogic\NotificationTranslator.cs" />
@@ -187,10 +189,12 @@
     <Compile Include="ViewModel\Dialog\ServerDialogViewModel.cs" />
     <Compile Include="ViewModel\Game\GameMainPageViewModel.cs" />
     <Compile Include="ViewModel\Game\GamePlayViewModel.cs" />
+    <Compile Include="ViewModel\Game\GameRatingViewModel.cs" />
     <Compile Include="ViewModel\List\UserViewModel.cs" />
     <Compile Include="ViewModel\MainChatPageViewModel.cs" />
     <Compile Include="ViewModel\MyPageViewModel.cs" />
     <Compile Include="ViewModel\RegistrationViewModel.cs" />
+    <Compile Include="ViewModel\SettingsPageViewModel.cs" />
     <Compile Include="ViewModel\UsersPageViewModel.cs" />
     <Compile Include="View\ChatView.xaml.cs">
       <DependentUpon>ChatView.xaml</DependentUpon>
@@ -222,6 +226,9 @@
     <Compile Include="View\Game\GamePlayView.xaml.cs">
       <DependentUpon>GamePlayView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\Game\GameRatingView.xaml.cs">
+      <DependentUpon>GameRatingView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\MainChatPageView.xaml.cs">
       <DependentUpon>MainChatPageView.xaml</DependentUpon>
     </Compile>
@@ -230,6 +237,9 @@
     </Compile>
     <Compile Include="View\RegistrationView.xaml.cs">
       <DependentUpon>RegistrationView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SettingsPageView.xaml.cs">
+      <DependentUpon>SettingsPageView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\UsersPageView.xaml.cs">
       <DependentUpon>UsersPageView.xaml</DependentUpon>
@@ -274,6 +284,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\Game\GameRatingView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\MainChatPageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -297,6 +311,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\RegistrationView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SettingsPageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -374,7 +392,28 @@
   <ItemGroup>
     <None Include="Resources\Classmates.wav" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <PublishFile Include="EntityFramework">
+      <Visible>False</Visible>
+      <Group>
+      </Group>
+      <TargetPath>
+      </TargetPath>
+      <PublishState>Exclude</PublishState>
+      <IncludeHash>True</IncludeHash>
+      <FileType>Assembly</FileType>
+    </PublishFile>
+    <PublishFile Include="Server">
+      <Visible>False</Visible>
+      <Group>
+      </Group>
+      <TargetPath>
+      </TargetPath>
+      <PublishState>Exclude</PublishState>
+      <IncludeHash>True</IncludeHash>
+      <FileType>Assembly</FileType>
+    </PublishFile>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

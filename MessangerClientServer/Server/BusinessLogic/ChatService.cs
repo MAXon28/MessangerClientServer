@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ChatLibrary;
 using ChatLibrary.DataTransferObject;
 using Server.Model;
 using Server.Repository;
@@ -50,6 +49,20 @@ namespace Server.BusinessLogic
             SaveAsync();
 
             return chatMessageDTO;
+        }
+
+        public List<ChatMessageDTO> GetCurrentReadMessages(int messageId)
+        {
+            var chatMessages = (from message in _efUnitOfWork.MessagesRepository.GetAll()
+                where message.Id <= messageId
+                select message).ToList();
+            chatMessages = chatMessages.Count > 100 ? chatMessages.Skip(chatMessages.Count - 100).ToList() : chatMessages;
+            List<ChatMessageDTO> chatMessagesDTO = new List<ChatMessageDTO>();
+            foreach (var message in chatMessages)
+            {
+                chatMessagesDTO.Add(GetReadyData(message));
+            }
+            return chatMessagesDTO;
         }
 
         /// <summary>
@@ -190,6 +203,11 @@ namespace Server.BusinessLogic
             await Task.Run(_efUnitOfWork.Save);
         }
 
+        /// <summary>
+        /// Метод для перевода данных в объект, который может быть передан клиенту
+        /// </summary>
+        /// <param name="chatMessage"> Объект модели базы данных </param>
+        /// <returns> Объект, который можно передавать клиенту </returns>
         private ChatMessageDTO GetReadyData(ChatMessage chatMessage)
         {
             return new ChatMessageDTO

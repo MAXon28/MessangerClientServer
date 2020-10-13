@@ -6,9 +6,19 @@ namespace ChatClient.ViewModel.Dialog
 {
     public class GameDialogViewModel : ViewModelBase
     {
-        public GameDialogViewModel() {}
+        public GameDialogViewModel()
+        {
+            DialogText = "Если Вы выйдете из игры, Вам засчитают поражение. Вы действительно хотите покинуть игру?";
+        }
+
+        public GameDialogViewModel(string text)
+        {
+            DialogText = text;
+        }
 
         public string UserResponse { get; private set; }
+
+        public string DialogText { get; }
 
         public ICommand SayYes
         {

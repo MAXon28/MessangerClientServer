@@ -5,14 +5,76 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModel="clr-namespace:ChatClient.ViewModel.Game"
              xmlns:spinner="http://schemas.fontawesome.io/icons/"
-             xmlns:interaction="http://schemas.microsoft.com/expression/2010/interactivity"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
              d:DesignWidth="561" d:DesignHeight="728" Background="#373737" Visibility="{Binding Condition}">
 
     <UserControl.DataContext>
         <viewModel:GamePlayViewModel/>
     </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="BackColor"  TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger  Binding="{Binding IsVisibleCancel, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#1E90FF"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#f4f4f4"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="Click">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -29,6 +91,7 @@
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
+            Style="{StaticResource BackColor}"
             HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Focusable="False"

@@ -1,101 +1,120 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
 using ChatClient.Interface;
 using ChatClient.Logic;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Logic.UserLogic;
-using ChatClient.View.Game;
-using ChatClient.ViewModel.List;
-using ChatLibrary;
 using ChatLibrary.DataTransferObject;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace ChatClient.ViewModel.Game
 {
-    class GameMainPageViewModel : ViewModelBase, IViewModel
+    class GameRatingViewModel : ViewModelBase, IViewModel
     {
         private ServerWorker _serverWorker;
+        private List<RatingDTO> _ratingOverall;
+        private List<RatingDTO> _ratingWithUsers;
+        private List<RatingDTO> _ratingWithComputer;
 
-        public GameMainPageViewModel() { }
+        public GameRatingViewModel() {}
 
-        public GameMainPageViewModel(string name)
+        public GameRatingViewModel(string name)
         {
             _serverWorker = ServerWorker.NewInstance();
             Condition = "Visible";
             Name = name;
+            IsEnableOverall = false;
+            IsEnableUsers = true;
+            IsEnableComputer = true;
         }
 
         public string Condition { get; set; }
 
         public string Name { get; set; }
 
-        public ICommand PlayWithUser
+        public List<RatingDTO> CurrentRating { get; set; }
+
+        public bool IsEnableOverall { get; set; }
+
+        public bool IsEnableUsers { get; set; }
+
+        public bool IsEnableComputer { get; set; }
+
+        public ICommand Overall
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
-                    var gamePlayViewModel = new GamePlayViewModel(Name, "With user");
-                    _serverWorker.RewriteDelegate(gamePlayViewModel);
-                    await Task.Run(() => _serverWorker.EventOpenNewPage());
-                    Game = new GamePlayView();
-                    Game.DataContext = gamePlayViewModel;
-                    await Task.Run(_serverWorker.SearchGamer);
-                    ViewModel = gamePlayViewModel;
+                    CurrentRating = _ratingOverall;
+                    IsEnableOverall = false;
+                    IsEnableUsers = true;
+                    IsEnableComputer = true;
                 });
             }
         }
 
-        public ICommand PlayWithComputer
+        public ICommand WithUsers
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
-                    var gamePlayViewModel = new GamePlayViewModel(Name, "With computer");
-                    _serverWorker.RewriteDelegate(gamePlayViewModel);
-                    await Task.Run(() => _serverWorker.EventOpenNewPage());
-                    Game = new GamePlayView();
-                    Game.DataContext = gamePlayViewModel;
-                    ViewModel = gamePlayViewModel;
+                    CurrentRating = _ratingWithUsers;
+                    IsEnableOverall = true;
+                    IsEnableUsers = false;
+                    IsEnableComputer = true;
                 });
             }
         }
 
-        public ICommand Rating
+        public ICommand WithComputer
         {
             get
             {
-                return new RelayCommand( async () =>
+                return new RelayCommand(() =>
                 {
-                    var gameRatingViewModel = new GameRatingViewModel(Name);
-                    _serverWorker.RewriteDelegate(gameRatingViewModel);
-                    await Task.Run(() => _serverWorker.EventOpenNewPage());
-                    Game = new GameRatingView();
-                    Game.DataContext = gameRatingViewModel;
-                    await Task.Run(_serverWorker.GetGameRating);
+                    CurrentRating = _ratingWithComputer;
+                    IsEnableOverall = true;
+                    IsEnableUsers = true;
+                    IsEnableComputer = false;
                 });
             }
         }
 
-        public FrameworkElement Game { get; set; }
-
-        public GamePlayViewModel ViewModel { get; private set; }
+        public ICommand Cancel
+        {
+            get
+            {
+                return new RelayCommand(() =>
+                {
+                    Condition = "Collapsed";
+                });
+            }
+        }
 
         public void Notification(BinaryReader binaryReader)
         {
             string code = binaryReader.ReadString();
-            if (code == "29")
+            if (code == "13-1")
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IFormatter formatter = new BinaryFormatter();
+                    CurrentRating = (List<RatingDTO>)formatter.Deserialize(_serverWorker.NetworkStream);
+                    _ratingOverall = CurrentRating;
+                    _ratingWithUsers = (List<RatingDTO>)formatter.Deserialize(_serverWorker.NetworkStream);
+                    _ratingWithComputer = (List<RatingDTO>)formatter.Deserialize(_serverWorker.NetworkStream);
+
+                }, DispatcherPriority.Background);
+            }
+            else if (code == "29")
             {
                 NotificationTranslator.GetEnteringUserNotification(binaryReader.ReadString(), "Information");
             }

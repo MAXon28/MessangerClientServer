@@ -1,7 +1,5 @@
-﻿using System.ComponentModel;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using ChatClient.Logic.MessageLogic;
 using ChatClient.ViewModel;
 
 namespace ChatClient.View
@@ -23,11 +21,6 @@ namespace ChatClient.View
         public void PasswordWrite(string password)
         {
             PasswordBoxChat.Password = password;
-        }
-
-        protected override void OnClosing(CancelEventArgs e)
-        {
-            MessagesContainer.SaveMessages();
         }
     }
 }

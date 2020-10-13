@@ -50,7 +50,8 @@
                 Margin="12"
                 BorderThickness="0"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+                VerticalAlignment="Center"
+                Command="{Binding PlayWithComputer}">
                 <TextBlock
                     Text="Играть с компьютером"
                     FontSize="28"
@@ -66,7 +67,8 @@
                 Margin="12"
                 BorderThickness="0"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+                VerticalAlignment="Center"
+                Command="{Binding Rating}">
                 <TextBlock
                     Text="Рейтинг"
                     FontSize="28"

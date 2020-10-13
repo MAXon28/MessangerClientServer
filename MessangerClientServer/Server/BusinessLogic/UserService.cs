@@ -79,9 +79,13 @@ namespace Server.BusinessLogic
             }
         }
 
-        public async void UpdatePastOnlineAsync(Guid userId, DateTime date)
+        public async void UpdatePastOnlineAndSeeMessageIdAsync(Guid userId, DateTime date, int messageId)
         {
-            await Task.Run(() => _efUnitOfWork.Users.UpdatePastOnline(userId, date));
+            await Task.Run(() =>
+            {
+                _efUnitOfWork.Users.UpdatePastOnline(userId, date);
+                _efUnitOfWork.Users.UpdateMessageId(userId, messageId);
+            });
         }
 
         public List<UserDTO> GetUsers()

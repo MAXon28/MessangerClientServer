@@ -13,7 +13,6 @@ using System.Windows.Threading;
 using ChatClient.Logic;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Logic.UserLogic;
-using ChatClient.Model;
 using ChatClient.ViewModel.List;
 using ChatLibrary;
 using ChatLibrary.DataTransferObject;

@@ -14,7 +14,7 @@
     <Grid>
         <TextBlock
             Foreground="#f4f4f4"
-            Text="Если Вы выйдете из игры, Вам засчитают поражение. Вы действительно хотите покинуть игру?"
+            Text="{Binding DialogText, UpdateSourceTrigger=PropertyChanged}"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
             TextAlignment="Center"

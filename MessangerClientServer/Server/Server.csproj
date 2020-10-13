@@ -71,10 +71,11 @@
     <Compile Include="Game\GameCenter.cs" />
     <Compile Include="Game\GameLogic.cs" />
     <Compile Include="Interface\ICertainList.cs" />
+    <Compile Include="Interface\IGame.cs" />
     <Compile Include="Interface\IRepository.cs" />
     <Compile Include="Interface\IService.cs" />
+    <Compile Include="Interface\ISettings.cs" />
     <Compile Include="Interface\IUser.cs" />
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\GameStatistic.cs" />
     <Compile Include="Model\Settings.cs" />
     <Compile Include="Repository\ChatMessageRepository.cs" />

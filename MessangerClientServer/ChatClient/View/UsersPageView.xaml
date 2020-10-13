@@ -106,6 +106,64 @@
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Template" Value="{StaticResource VerticalScrollBar}"/>
         </Style>
+
+        <Style x:Key="BackColor"  TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#1E90FF"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#f4f4f4"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="Click">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid
@@ -125,7 +183,7 @@
                 Foreground="#f4f4f4"
                 Background="#1E90FF"
                 Command="{Binding AllUsers}"
-                Style="{x:Null}">
+                Style="{StaticResource BackColor}">
                 <Button.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="5"></Setter>
@@ -146,7 +204,7 @@
                 Background="#1E90FF"
                 MaxWidth="140"
                 Command="{Binding OnlineUsers}"
-                Style="{x:Null}">
+                Style="{StaticResource BackColor}">
                 <Button.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="5"></Setter>

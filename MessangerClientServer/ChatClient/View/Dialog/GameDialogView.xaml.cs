@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Input;
 using ChatClient.ViewModel.Dialog;
 
 namespace ChatClient.View.Dialog
@@ -15,11 +14,6 @@ namespace ChatClient.View.Dialog
         private void Confirm(object sender, RoutedEventArgs e)
         {
             Close();
-        }
-
-        private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            DragMove();
         }
     }
 }

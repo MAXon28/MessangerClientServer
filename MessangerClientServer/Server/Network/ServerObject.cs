@@ -71,33 +71,7 @@ namespace Server.Network
                     }
                     else
                     {
-                        Guid userId = new Guid();
-                        (string, UserDomain) resultAuth = Authorization(reader.ReadString(), reader.ReadString(), ref userId);
-
-                        var networkStreamWriter = new NetworkStream(tcpClient);
-                        var writer = new BinaryWriter(networkStreamWriter);
-                        writer.Write(resultAuth.Item1);
-
-                        if (resultAuth.Item1 == "28")
-                        {
-                            Console.ForegroundColor = resultAuth.Item2.Gender == "woman" ? new Woman().GetForeground() : new Man().GetForeground();
-                            Console.Write(resultAuth.Item2.Name);
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine(" онлайн!");
-
-                            writer.Write(resultAuth.Item2.Name);
-                            writer.Write(resultAuth.Item2.Gender);
-
-                            (int, string) settings = new SettingsService(_userService.GetUnitOfWork()).GetSettingsByUserId(userId);
-                            writer.Write(settings.Item1);
-                            writer.Write(settings.Item2);
-
-                            Client client = new Client(tcpClient, this, _userService, userId, resultAuth.Item2.Gender, resultAuth.Item2.Name);
-                            Thread threadClient = new Thread(client.Process);
-                            threadClient.Start();
-                        }
-
-                        writer.Flush();
+                        Authorization(tcpClient, reader);
                     }
                 }
             }
@@ -130,6 +104,39 @@ namespace Server.Network
             return "33";
         }
 
+        private void Authorization(Socket tcpClient, BinaryReader reader)
+        {
+            Guid userId = new Guid();
+            (string, UserDomain) resultAuth = Authorization(reader.ReadString(), reader.ReadString(), ref userId);
+
+            var networkStreamWriter = new NetworkStream(tcpClient);
+            var writer = new BinaryWriter(networkStreamWriter);
+            writer.Write(resultAuth.Item1);
+
+            if (resultAuth.Item1 == "28")
+            {
+                Console.ForegroundColor = resultAuth.Item2.Gender == "woman" ? new Woman().GetForeground() : new Man().GetForeground();
+                Console.Write(resultAuth.Item2.Name);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(" онлайн!");
+
+                writer.Write(resultAuth.Item2.Name);
+                writer.Write(resultAuth.Item2.Gender);
+                writer.Write(resultAuth.Item2.ChatMessageId != 0);
+
+                (int, string) settings = new SettingsService(_userService.GetUnitOfWork()).GetSettingsByUserId(userId);
+                writer.Write(settings.Item1);
+                writer.Write(settings.Item2);
+
+                Client client = new Client(tcpClient, this, _userService, userId, resultAuth.Item2.Gender, resultAuth.Item2.Name);
+                client.PastIdMessageWhichCanSee = resultAuth.Item2.ChatMessageId;
+                Thread threadClient = new Thread(client.Process);
+                threadClient.Start();
+            }
+
+            writer.Flush();
+        }
+
         private (string, UserDomain) Authorization(string login, string password, ref Guid userId)
         {
             UserDomain user = _userService.ValidationData(login, password, ref userId);
@@ -160,7 +167,7 @@ namespace Server.Network
             }
         }
 
-        public void BroadcastMessageFromUser(string code, string name, string message, string date, Guid userGuidWhoSendMessage)
+        public void BroadcastMessageFromUser(string code, string name, string message, string date, int messageId, Guid userGuidWhoSendMessage)
         {
             for (int i = 0; i < _clients.Count; i++)
             {
@@ -175,6 +182,7 @@ namespace Server.Network
                             _clients[i].Writer.Write(message);
                             _clients[i].Writer.Write(date);
                             _clients[i].Writer.Flush();
+                            _clients[i].PastIdMessageWhichCanSee = messageId;
                         }
                         else
                         {

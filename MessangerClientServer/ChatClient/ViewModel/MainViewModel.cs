@@ -133,6 +133,7 @@ namespace ChatClient.ViewModel
             string resultCode = "";
             string name = "";
             string gender = "";
+            bool isHavePastMessage = false;
             string login = Login ?? "";
             string password = new System.Net.NetworkCredential(string.Empty, Password).Password;
             await Task.Run(async () =>
@@ -140,7 +141,7 @@ namespace ChatClient.ViewModel
                 try
                 {
                     _serverWorker = ServerWorker.NewInstance();
-                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name, ref gender);
+                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name, ref gender, ref isHavePastMessage);
                     if (resultCode == "28")
                     {
                         if (IsRemember)
@@ -168,7 +169,9 @@ namespace ChatClient.ViewModel
                 MainChatPageViewModel mainChatPageViewModel = new MainChatPageViewModel(name);
                 NewPage = new MainChatPageView();
                 NewPage.DataContext = mainChatPageViewModel;
-                mainChatPageViewModel.StartLoad();
+                mainChatPageViewModel.StartLoad(isHavePastMessage);
+                Login = "";
+                _viewWindow.PasswordWrite("");
             }
             else if (resultCode == "")
             {

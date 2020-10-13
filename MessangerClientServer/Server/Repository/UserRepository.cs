@@ -68,5 +68,12 @@ namespace Server.Repository
             user.PastOnline = newPastOnline;
             _chatDbContext.SaveChanges();
         }
+
+        public void UpdateMessageId(Guid userId, int messageId)
+        {
+            User user = _chatDbContext.Users.Find(userId);
+            user.ChatMessageId = messageId;
+            _chatDbContext.SaveChanges();
+        }
     }
 }

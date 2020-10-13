@@ -2,6 +2,7 @@
 using System.Media;
 using System.Windows.Input;
 using ChatClient.Interface;
+using ChatClient.Logic.MessageLogic;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Logic.UserLogic;
 using ChatClient.View.Dialog;
@@ -92,6 +93,7 @@ namespace ChatClient.ViewModel
             {
                 NotificationTranslator.RewriteDataNotification("Имя пользователя изменено!", "Success");
                 Name = binaryReader.ReadString();
+                //MessagesContainer.RewriteFile(Name);
             }
             else if (code == "41")
             {

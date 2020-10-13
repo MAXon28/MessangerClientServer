@@ -1,0 +1,318 @@
+﻿<UserControl x:Class="ChatClient.View.SettingsPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewModel="clr-namespace:ChatClient.ViewModel"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" 
+             d:DesignWidth="561" d:DesignHeight="728" Background="#373737" Visibility="{Binding Condition}">
+
+    <UserControl.DataContext>
+        <viewModel:SettingsPageViewModel/>
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="BackColor"  TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#1E90FF"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#f4f4f4"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="Click">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)"
+                                            To="#87CEEB"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                            To="#000000"
+                                            Duration="0:0:0.4"
+                                            FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BorderStyle">
+            <Setter Property="Control.BorderBrush" Value="LightGray" />
+            <Setter Property="Control.BorderThickness" Value="1" />
+            <Setter Property="Control.Background" Value="#373737" />
+        </Style>
+
+        <SolidColorBrush x:Key="ComboBackgroundBrush" Color="#373737" />
+
+        <Style x:Key="ComboBoxTextBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="{StaticResource ComboBackgroundBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid>
+                            <Border 
+                                CornerRadius="3, 0, 0, 3"
+                                BorderThickness="0"
+                                Background="{TemplateBinding Background}">
+                                <ScrollViewer x:Name="PART_ContentHost"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ComboBoxButtonStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Background" Value="{StaticResource ComboBackgroundBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border 
+                            Background="{TemplateBinding Background}" 
+                            x:Name="border" 
+                            CornerRadius="0, 3, 3, 0" 
+                            BorderThickness="0">
+                            <ContentPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ComboBoxOverlayToggleButtonStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="ClickMode" Value="Press"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Grid Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RoundComboBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource BorderStyle}">
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="Height" Value="37"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition MaxWidth="18"/>
+                            </Grid.ColumnDefinitions>
+                            <ToggleButton
+                                Panel.ZIndex="1"
+                                Grid.Column="0"
+                                Style="{StaticResource ComboBoxOverlayToggleButtonStyle}"
+                                IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <TextBox 
+                                x:Name="PART_EditableTextBox"
+                                Panel.ZIndex="0"
+                                Padding="0,0,0,0"
+                                BorderBrush="LightGray"
+                                Style="{StaticResource ComboBoxTextBoxStyle}"
+                                Background="{TemplateBinding Background}"
+                                IsHitTestVisible="{TemplateBinding IsEditable}"/>
+                            <ToggleButton 
+                                Grid.Column="1" 
+                                Height="{TemplateBinding Height}"
+                                Style="{StaticResource ComboBoxButtonStyle}"
+                                Focusable="False"
+                                IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                ClickMode="Press"
+                                Background="{TemplateBinding Background}">
+                                <Path 
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Data="M 0 0 L 4 4 L 8 0 Z"
+                                    Fill="#1E90FF"/>
+                            </ToggleButton>
+                            <ContentPresenter 
+                                Grid.Column="0" 
+                                x:Name="ContentSite"
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                Margin="6,0,0,0"/>
+                            <Popup 
+                                x:Name="Popup"
+                                Placement="Bottom"
+                                IsOpen="{TemplateBinding IsDropDownOpen}"
+                                AllowsTransparency="True" 
+                                Focusable="False"
+                                PopupAnimation="Slide">
+                                <Grid
+                                    x:Name="DropDown"
+                                    SnapsToDevicePixels="True"                
+                                    MinWidth="{TemplateBinding Width}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}" Width="510">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="55*"/>
+                                        <RowDefinition Height="29*"/>
+                                    </Grid.RowDefinitions>
+                                    <Border 
+                                        x:Name="DropDownBorder"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        BorderThickness="0"
+                                        CornerRadius="3"
+                                        Background="#1E90FF"
+                                        Height="Auto"
+                                        Width="Auto" 
+                                        Grid.RowSpan="2"/>
+                                    <ScrollViewer Margin="1,1,1,1" SnapsToDevicePixels="True" Grid.RowSpan="2">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition MinHeight="128" MaxHeight="128"/>
+            <RowDefinition MinHeight="328" MaxHeight="428"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition MinWidth="367" Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Foreground="#1E90FF"
+            Background="Transparent"
+            Text="Настройки"
+            FontSize="40"
+            FontWeight="Bold"
+            TextWrapping="Wrap"
+            TextAlignment="Center"
+            Margin="28"/>
+        <Border
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Margin="28, 0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition MinHeight="164" MaxHeight="214"/>
+                    <RowDefinition MinHeight="164" MaxHeight="214"/>
+                </Grid.RowDefinitions>
+                <Border
+                    Grid.Row="0"
+                    HorizontalAlignment="Stretch"
+                    BorderBrush="#1E90FF"
+                    BorderThickness="3, 3, 3, 3"
+                    Padding="3, 12, 12, 12"
+                    Background="Transparent">
+                    <ComboBox
+                        Style="{StaticResource RoundComboBox}"
+                        SelectedIndex="{Binding IndexTypeOfNotification, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Всё включено</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Только сообщения</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Только о входе/выходе</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Всё выключено</TextBlock>
+                        <ComboBox.ToolTip>Настрйоки уведомления</ComboBox.ToolTip>
+                    </ComboBox>
+                </Border>
+
+                <Border
+                    Grid.Row="1"
+                    HorizontalAlignment="Stretch"
+                    BorderBrush="#1E90FF"
+                    BorderThickness="3, 3, 3, 3"
+                    Padding="3, 12, 12, 12"
+                    Background="Transparent">
+                    <ComboBox
+                        Style="{StaticResource RoundComboBox}"
+                        SelectedIndex="{Binding IndexTypeOfSound, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Нет звука</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">iPhone</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Вконтакте</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Telegram</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">What's Up iPhone</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">What's Up Android</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Одноклассники</TextBlock>
+                        <TextBlock FontSize="28" Foreground="#f4f4f4">Аська</TextBlock>
+                        <ComboBox.ToolTip>Настройки звуков сообщений</ComboBox.ToolTip>
+                    </ComboBox>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Button
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Style="{StaticResource BackColor}"
+            Content="Сохранить"
+            FontSize="19"
+            Margin="0, 28"
+            Padding="28, 12, 28, 12"
+            Foreground="FloralWhite"
+            Background="#1E90FF"
+            Command="{Binding Save}">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Button.Resources>
+            <Button.Effect>
+                <DropShadowEffect Color="#373737" Direction="320" ShadowDepth="10" Opacity="0.5" />
+            </Button.Effect>
+        </Button>
+    </Grid>
+</UserControl>

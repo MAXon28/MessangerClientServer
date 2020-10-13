@@ -40,8 +40,8 @@ namespace Server.Game
 
         private static string Result()
         {
-            int startTime = DateTime.Now.Minute;
-            while (DateTime.Now.Minute - startTime < 3 && _userWhoWait != null && _isWait) ;
+            int startTime = DateTime.Now.Second != 0 ? DateTime.Now.Second - 1 : 59;
+            while (DateTime.Now.Second != startTime && _userWhoWait != null && _isWait) ;
 
             if (!_isWait)
             {

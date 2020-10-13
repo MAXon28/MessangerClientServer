@@ -83,7 +83,32 @@ namespace Server.Repository
             }
         }
 
+        public IGame<GameStatistic> GameStatistic
+        {
+            get
+            {
+                if (_gameRepository == null)
+                {
+                    _gameRepository = new GameRepository(_db);
+                }
+                return _gameRepository;
+            }
+        }
+
         public IRepository<Settings> SettingsRepository
+        {
+            get
+            {
+                if (_settingsRepository == null)
+                {
+                    _settingsRepository = new SettingsRepository(_db);
+                }
+
+                return _settingsRepository;
+            }
+        }
+
+        public ISettings<Settings> SettingsUpdate
         {
             get
             {

@@ -1,94 +1,112 @@
-﻿using System.Collections.Generic;
-using Server.Network;
+﻿using System;
+using System.Collections.Generic;
+using ChatClient.ViewModel.Game;
 
-namespace Server.Game
+namespace ChatClient.Logic.GameLogic
 {
     class GameLogic
     {
+        private GamePlayViewModel _user;
+        private Computer _computer;
         private List<List<string>> _playingField;
         private string _currentSymbol;
-        private int _moveCounter;
 
-        public GameLogic()
+        public GameLogic() { }
+
+        public GameLogic(GamePlayViewModel user)
         {
+            _user = user;
+            _computer = new Computer(this);
             _playingField = new List<List<string>>();
             _playingField.Add(new List<string> { "null", "null", "null" });
             _playingField.Add(new List<string> { "null", "null", "null" });
             _playingField.Add(new List<string> { "null", "null", "null" });
             _currentSymbol = "X";
-            _moveCounter = 0;
+            WhoIsWho();
+            _computer.Symbol = ComputerSymbol;
+            if (ComputerSymbol == "X")
+            {
+                StartAsync();
+            }
         }
 
-        public Client FirstGamer { get; set; }
+        public string GamerSymbol { get; private set; }
 
-        public Client SecondGamer { get; set; }
+        public string ComputerSymbol { get; private set; }
 
-        public string FirstGamerSymbol { get; set; }
-
-        public string SecondGamerSymbol { get; set; }
-
-        public void Move(int row, int column)
+        public async void SetUserMoveAsync(int row, int column)
         {
             _playingField[row][column] = _currentSymbol;
-            if (_moveCounter >= 2)
+            string typeOfGameOver = "";
+            string reasonGameOver = "";
+            if (IsGameOver(ref typeOfGameOver, ref reasonGameOver))
             {
-                string typeOfGameOver = "";
-                string reasonGameOver = "";
-                bool isGameOver = IsGameOver(ref typeOfGameOver, ref reasonGameOver);
-                if (isGameOver)
+                _user.SetGameOverWithComputer(typeOfGameOver, reasonGameOver);
+                return;
+            }
+            _currentSymbol = ComputerSymbol;
+            await _computer.ComputerResponse.Invoke(_playingField);
+        }
+
+        public void SetComputerMove(int row, int column)
+        {
+            _playingField[row][column] = _currentSymbol;
+            string typeOfGameOver = "";
+            string reasonGameOver = "";
+            if (IsGameOver(ref typeOfGameOver, ref reasonGameOver))
+            {
+                if (typeOfGameOver == "lose")
                 {
-                    if (typeOfGameOver == "First gamer win")
-                    {
-                        FirstGamer.GameOver("11-1", reasonGameOver);
-                        SecondGamer.GameOver("11-2", reasonGameOver);
-                    }
-                    else if (typeOfGameOver == "Second gamer win")
-                    {
-                        FirstGamer.GameOver("11-2", reasonGameOver);
-                        SecondGamer.GameOver("11-1", reasonGameOver);
-                    }
-                    else
-                    {
-                        if (_currentSymbol == FirstGamerSymbol)
-                        {
-                            FirstGamer.GameOver("11-3", "");
-                            SecondGamer.GameOver("11-3", row.ToString() + column);
-                        }
-                        else
-                        {
-                            FirstGamer.GameOver("11-3", row.ToString() + column);
-                            SecondGamer.GameOver("11-3", "");
-                        }
-                    }
-                    return;
+                    _user.SetGameOverWithComputer(typeOfGameOver, reasonGameOver);
                 }
+                else
+                {
+                    _user.SetGameOverWithComputer(typeOfGameOver, row.ToString() + column);
+                }
+                return;
+            }
+            _currentSymbol = GamerSymbol;
+            _user.SetComputerMove(row, column);
+        }
+
+        private void WhoIsWho()
+        {
+            List<string> symbols = new List<string> { "X", "0" };
+            int countRandom = 0;
+            int countX = 0;
+            int count0 = 0;
+            var randomizer = new Random();
+            while (countRandom < 3)
+            {
+                int index = randomizer.Next(0, 2);
+                if (symbols[index] == "X")
+                {
+                    countX++;
+                }
+                else
+                {
+                    count0++;
+                }
+
+                countRandom++;
             }
 
-            if (FirstGamerSymbol == _currentSymbol)
+            if (countX > 1)
             {
-                SecondGamer.GameOpponentMove(row + column.ToString());
+                GamerSymbol = symbols[0];
+                ComputerSymbol = symbols[1];
             }
-            else
+
+            if (count0 > 1)
             {
-                FirstGamer.GameOpponentMove(row + column.ToString());
-            }
-            _currentSymbol = _currentSymbol == "X" ? "0" : "X";
-            if (_currentSymbol == "X")
-            {
-                _moveCounter++;
+                GamerSymbol = symbols[1];
+                ComputerSymbol = symbols[0];
             }
         }
 
-        public void EarlyGameOver(Client client)
+        private async void StartAsync()
         {
-            if (FirstGamer == client)
-            {
-                SecondGamer.EarlyVictory();
-            }
-            else
-            {
-                FirstGamer.EarlyVictory();
-            }
+            await _computer.ComputerResponse.Invoke(_playingField);
         }
 
         private bool IsGameOver(ref string typeOfGameOver, ref string reasonGameOver)
@@ -128,7 +146,7 @@ namespace Server.Game
 
             if (reasonGameOver != "")
             {
-                typeOfGameOver = FirstGamerSymbol == _currentSymbol ? "First gamer win" : "Second gamer win";
+                typeOfGameOver = GamerSymbol == _currentSymbol ? "win" : "lose";
                 return true;
             }
 

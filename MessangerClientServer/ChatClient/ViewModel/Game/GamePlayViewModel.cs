@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -11,22 +7,26 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ChatClient.Interface;
 using ChatClient.Logic;
+using ChatClient.Logic.GameLogic;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Logic.UserLogic;
-using ChatClient.ViewModel.List;
-using ChatLibrary;
-using ChatLibrary.DataTransferObject;
+using ChatClient.View.Dialog;
+using ChatClient.ViewModel.Dialog;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace ChatClient.ViewModel.Game
 {
+    delegate void DelegateMove(int tableRow, int tableColumn);
+
     class GamePlayViewModel : ViewModelBase, IViewModel
     {
         private ServerWorker _serverWorker;
-        private List<List<string>> _playingField;
+        private DelegateMove _delegateMove;
+        private GameLogic _gameLogic;
+
         private const string FIRST_PLAYER_TURN = "Ваш ход";
-        private const string SECOND_PLAYER_TURN = "Ожидание хода ";
+        private const string SECOND_PLAYER_TURN = "Ожидание хода от игрока ";
         private const string FIRST_PLAYER_WIN = "Вы победили!!!";
         private const string SECOND_PLAYER_WIN = "К сожалению, Вы проиграли...";
         private const string SECOND_PLAYER_GIVE_UP = " вышел. Вы победили!";
@@ -34,17 +34,40 @@ namespace ChatClient.ViewModel.Game
 
         public GamePlayViewModel() { }
 
-        public GamePlayViewModel(string name)
+        public GamePlayViewModel(string name, string typoOfGame)
         {
             _serverWorker = ServerWorker.NewInstance();
-            _playingField = new List<List<string>>();
-            _playingField.Add(new List<string> { "", "", "" });
-            _playingField.Add(new List<string> { "", "", "" });
-            _playingField.Add(new List<string> { "", "", "" });
+            TypeOfGame = typoOfGame;
             Condition = "Visible";
             Name = name;
-            IsVisibleGame = false;
-            IsVisibleSpinner = true;
+
+            if (TypeOfGame == "With user")
+            {
+                IsVisibleGame = false;
+                IsVisibleSpinner = true;
+                _delegateMove = MoveForGameWithUserAsync;
+            }
+            else
+            {
+                IsVisibleGame = true;
+                IsVisibleSpinner = false;
+                OpponentName = "Компьютер";
+                _gameLogic = new GameLogic(this);
+                FirstGamerSymbol = _gameLogic.GamerSymbol;
+                SecondGamerSymbol = _gameLogic.ComputerSymbol;
+                TextNotification = $"Вы играете за {FirstGamerSymbol}";
+                ShowNotificationAsync();
+                if (FirstGamerSymbol == "X")
+                {
+                    GameInformation = FIRST_PLAYER_TURN;
+                    IsEnable = true;
+                }
+                else
+                {
+                    GameInformation = "Ожидание хода от компьютера";
+                }
+                _delegateMove = MoveForGameWithComputer;
+            }
             IsVisibleCancel = false;
 
             OneOneSquare = "";
@@ -69,6 +92,8 @@ namespace ChatClient.ViewModel.Game
         }
 
         public string Condition { get; set; }
+
+        public string TypeOfGame { get; }
 
         public string Name { get; set; }
 
@@ -116,16 +141,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async() =>
+                return new RelayCommand(() =>
                 {
                     if (OneOneSquare == "")
                     {
                         IsEnable = false;
                         OneOneSquare = FirstGamerSymbol;
-                        _playingField[0][0] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("00"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(0, 0);
                     }
                 });
             }
@@ -135,16 +157,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async() =>
+                return new RelayCommand(() =>
                 {
                     if (OneTwoSquare == "")
                     {
                         IsEnable = false;
                         OneTwoSquare = FirstGamerSymbol;
-                        _playingField[0][1] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("01"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(0, 1);
                     }
                 });
             }
@@ -154,16 +173,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (OneThreeSquare == "")
                     {
                         IsEnable = false;
                         OneThreeSquare = FirstGamerSymbol;
-                        _playingField[0][2] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("02"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(0, 2);
                     }
                 });
             }
@@ -173,16 +189,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (TwoOneSquare == "")
                     {
                         IsEnable = false;
                         TwoOneSquare = FirstGamerSymbol;
-                        _playingField[1][0] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("10"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(1, 0);
                     }
                 });
             }
@@ -192,16 +205,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (TwoTwoSquare == "")
                     {
                         IsEnable = false;
                         TwoTwoSquare = FirstGamerSymbol;
-                        _playingField[1][1] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("11"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(1, 1);
                     }
                 });
             }
@@ -211,16 +221,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (TwoThreeSquare == "")
                     {
                         IsEnable = false;
                         TwoThreeSquare = FirstGamerSymbol;
-                        _playingField[1][2] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("12"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(1, 2);
                     }
                 });
             }
@@ -230,16 +237,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (ThreeOneSquare == "")
                     {
                         IsEnable = false;
                         ThreeOneSquare = FirstGamerSymbol;
-                        _playingField[2][0] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("20"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(2, 0);
                     }
                 });
             }
@@ -249,16 +253,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (ThreeTwoSquare == "")
                     {
                         IsEnable = false;
                         ThreeTwoSquare = FirstGamerSymbol;
-                        _playingField[2][1] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("21"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(2, 1);
                     }
                 });
             }
@@ -268,16 +269,13 @@ namespace ChatClient.ViewModel.Game
         {
             get
             {
-                return new RelayCommand(async () =>
+                return new RelayCommand(() =>
                 {
                     if (ThreeThreeSquare == "")
                     {
                         IsEnable = false;
                         ThreeThreeSquare = FirstGamerSymbol;
-                        _playingField[2][2] = FirstGamerSymbol;
-                        await Task.Run(() => _serverWorker.SendPlayerSMove("22"));
-                        GameInformation = SECOND_PLAYER_TURN + OpponentName;
-                        CheckDraw();
+                        _delegateMove.Invoke(2, 2);
                     }
                 });
             }
@@ -320,7 +318,38 @@ namespace ChatClient.ViewModel.Game
             }
             else if (code == "2-11")
             {
-                IsVisibleSpinner = false;
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IsVisibleSpinner = false;
+                    var gameDialogViewModel = new GameDialogViewModel("Соперник не найден! Хотите сыгарть с компьютером?");
+                    var gameDialogView = new GameDialogView(gameDialogViewModel);
+                    gameDialogView.ShowDialog();
+                    if (gameDialogViewModel.UserResponse == "Да")
+                    {
+                        IsVisibleGame = true;
+                        OpponentName = "Компьютер";
+                        _delegateMove = MoveForGameWithComputer;
+                        _gameLogic = new GameLogic(this);
+                        FirstGamerSymbol = _gameLogic.GamerSymbol;
+                        SecondGamerSymbol = _gameLogic.ComputerSymbol;
+                        TextNotification = $"Вы играете за {FirstGamerSymbol}";
+                        ShowNotificationAsync();
+                        if (FirstGamerSymbol == "X")
+                        {
+                            IsEnable = true;
+                            GameInformation = FIRST_PLAYER_TURN;
+                        }
+                        else
+                        {
+                            GameInformation = "Ожидание хода от компьютера";
+                        }
+                        _delegateMove = MoveForGameWithComputer;
+                    }
+                    else
+                    {
+                        Condition = "Collapsed";
+                    }
+                }, DispatcherPriority.Background);
             }
             else if (code == "11-0")
             {
@@ -402,13 +431,72 @@ namespace ChatClient.ViewModel.Game
             }
         }
 
+        private async void MoveForGameWithUserAsync(int tableRow, int tableColumn)
+        {
+            await Task.Run(() => _serverWorker.SendPlayerSMove(tableRow, tableColumn));
+            GameInformation = SECOND_PLAYER_TURN + OpponentName;
+        }
+
+        private void MoveForGameWithComputer(int tableRow, int tableColumn)
+        {
+            GameInformation = "Ожидание хода от компьютера";
+            _gameLogic.SetUserMoveAsync(tableRow, tableColumn);
+        }
+
+        public void SetComputerMove(int tableRow, int tableColumn)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                SetSymbolInPlayingField(SecondGamerSymbol, tableRow.ToString() + tableColumn, false);
+                IsEnable = true;
+                GameInformation = FIRST_PLAYER_TURN;
+            }, DispatcherPriority.Background);
+        }
+
+        public void SetGameOverWithComputer(string typeOfGameOver, string reason)
+        {
+            Application.Current.Dispatcher.Invoke(async () =>
+            {
+                if (typeOfGameOver == "win")
+                {
+                    await Task.Run(() => _serverWorker.GameOverThisComputer(1101));
+                    GameInformation = FIRST_PLAYER_WIN;
+                    string[] positions = reason.Split('-');
+                    SetSymbolInPlayingField(FirstGamerSymbol, positions[0], true, "#00FF7F");
+                    await Task.Delay(528);
+                    SetSymbolInPlayingField(FirstGamerSymbol, positions[1], true, "#00FF7F");
+                    await Task.Delay(528);
+                    SetSymbolInPlayingField(FirstGamerSymbol, positions[2], true, "#00FF7F");
+                    IsVisibleCancel = true;
+                }
+                else if (typeOfGameOver == "lose")
+                {
+                    await Task.Run(() => _serverWorker.GameOverThisComputer(1102));
+                    GameInformation = SECOND_PLAYER_WIN;
+                    string[] positions = reason.Split('-');
+                    SetSymbolInPlayingField(SecondGamerSymbol, positions[0], true, "#FA8072");
+                    await Task.Delay(528);
+                    SetSymbolInPlayingField(SecondGamerSymbol, positions[1], true, "#FA8072");
+                    await Task.Delay(528);
+                    SetSymbolInPlayingField(SecondGamerSymbol, positions[2], true, "#FA8072");
+                    IsVisibleCancel = true;
+                }
+                else
+                {
+                    await Task.Run(() => _serverWorker.GameOverThisComputer(1103));
+                    GameInformation = DRAW;
+                    SetSymbolInPlayingField(SecondGamerSymbol, reason, false);
+                    IsVisibleCancel = true;
+                }
+            }, DispatcherPriority.Background);
+        }
+
         private void SetSymbolInPlayingField(string symbol, string position, bool isNewBackColor, string color = null)
         {
             switch (position)
             {
                 case "00":
                     OneOneSquare = symbol;
-                    _playingField[0][0] = symbol;
                     if (isNewBackColor)
                     {
                         OneOneBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -416,7 +504,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "01":
                     OneTwoSquare = symbol;
-                    _playingField[0][1] = symbol;
                     if (isNewBackColor)
                     {
                         OneTwoBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -424,7 +511,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "02":
                     OneThreeSquare = symbol;
-                    _playingField[0][2] = symbol;
                     if (isNewBackColor)
                     {
                         OneThreeBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -432,7 +518,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "10":
                     TwoOneSquare = symbol;
-                    _playingField[1][0] = symbol;
                     if (isNewBackColor)
                     {
                         TwoOneBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -440,7 +525,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "11":
                     TwoTwoSquare = symbol;
-                    _playingField[1][1] = symbol;
                     if (isNewBackColor)
                     {
                         TwoTwoBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -448,7 +532,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "12":
                     TwoThreeSquare = symbol;
-                    _playingField[1][2] = symbol;
                     if (isNewBackColor)
                     {
                         TwoThreeBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -456,7 +539,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "20":
                     ThreeOneSquare = symbol;
-                    _playingField[2][0] = symbol;
                     if (isNewBackColor)
                     {
                         ThreeOneBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -464,7 +546,6 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "21":
                     ThreeTwoSquare = symbol;
-                    _playingField[2][1] = symbol;
                     if (isNewBackColor)
                     {
                         ThreeTwoBack = (Brush)new BrushConverter().ConvertFromString(color);
@@ -472,21 +553,11 @@ namespace ChatClient.ViewModel.Game
                     break;
                 case "22":
                     ThreeThreeSquare = symbol;
-                    _playingField[2][2] = symbol;
                     if (isNewBackColor)
                     {
                         ThreeThreeBack = (Brush)new BrushConverter().ConvertFromString(color);
                     }
                     break;
-            }
-        }
-
-        private void CheckDraw()
-        {
-            if (!_playingField[0].Contains("") && !_playingField[1].Contains("") && !_playingField[2].Contains(""))
-            {
-                GameInformation = DRAW;
-                IsVisibleCancel = true;
             }
         }
 

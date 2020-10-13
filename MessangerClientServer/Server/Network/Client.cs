@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using ChatLibrary;
+using System.Threading.Tasks;
 using ChatLibrary.DataTransferObject;
 using Server.BusinessLogic;
 using Server.Game;
@@ -21,6 +20,7 @@ namespace Server.Network
         private ServerObject _server;
         private UserService _userService;
         private ChatService _chatService;
+        private GameService _gameService;
         private SettingsService _settingsService;
         private GameLogic _gameLogic;
         private IHuman _human;
@@ -36,8 +36,13 @@ namespace Server.Network
         private const int LOAD_USERS = 10;
         private const int PLAY_GAME = 11;
         private const int NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE = 12;
+        private const int GET_GAME_RATING = 13;
+        private const int UPDATE_SETTINGS = 14;
         private const int PlLAYER_S_MOVE = 110;
         private const int OUT_THE_GAME = 111;
+        private const int WIN_IN_GAME_WITH_COMPUTER = 1101;
+        private const int LOSE_IN_GAME_WITH_COMPUTER = 1102;
+        private const int DRAW_IN_GAME_WITH_COMPUTER = 1103;
 
         public Client(Socket clientSocket, ServerObject server, UserService userService, Guid id, string gender, string name)
         {
@@ -45,7 +50,8 @@ namespace Server.Network
             _server = server;
             _userService = userService;
             _chatService = new ChatService(userService.GetUnitOfWork());
-            _settingsService = new SettingsService(_chatService.GetUnitOfWork());
+            _gameService = new GameService(_chatService.GetUnitOfWork());
+            _settingsService = new SettingsService(_gameService.GetUnitOfWork());
             Id = id;
             SetGender(gender);
             Name = name;
@@ -71,6 +77,8 @@ namespace Server.Network
 
         public ChatMessageDTO PastMessage { get; set; }
 
+        public int PastIdMessageWhichCanSee { get; set; }
+
         public void Process()
         {
             try
@@ -92,84 +100,52 @@ namespace Server.Network
                                 GetMessages();
                                 break;
                             case REWRITE_USER_NAME:
-                                string newName = Reader.ReadString();
-                                if (_userService.IsUniqueData(name: newName))
-                                {
-                                    Name = newName;
-                                    _userService.UpdateUserAsync(1, Id, newName);
-                                    Writer.Write("40");
-                                    Writer.Write(Name);
-                                }
-                                else
-                                {
-                                    Writer.Write("41");
-                                }
+                                RewriteUserName();
                                 break;
                             case REWRITE_USER_GENDER:
-                                string newGender = Reader.ReadString();
-                                SetGender(newGender);
-                                _userService.UpdateUserAsync(2, Id, newGender);
+                                RewriteUserGender();
                                 break;
                             case REWRITE_USER_LOGIN:
-                                string newLogin = Reader.ReadString();
-                                if (_userService.IsUniqueData(login: newLogin))
-                                {
-                                    _userService.UpdateUserAsync(3, Id, newLogin);
-                                    Writer.Write("42");
-                                    Writer.Write(newLogin);
-                                }
-                                else
-                                {
-                                    Writer.Write("43");
-                                }
+                                RewriteUserLogin();
                                 break;
                             case REWRITE_USER_PASSWORD:
-                                _userService.UpdateUserAsync(4, Id, Reader.ReadString());
+                                RewriteUserPasswordAsync();
                                 break;
                             case EXIT:
-                                _server.RemoveConnection(Id);
-                                Close();
+                                Exit();
                                 break;
                             case NOTIFICATION_ABOUT_GO_TO_NEW_PAGE:
-                                UserActivePage = Reader.ReadString();
-                                Writer.Write("");
-                                Writer.Flush();
+                                NotificationAboutGoToNewPage();
                                 break;
                             case LOAD_USERS:
-                                List<UserDTO> users = _userService.GetUsers();
-                                List<Client> clients = _server.Clients;
-                                foreach (var client in clients)
-                                {
-                                    List<UserDTO> usersList = (from u in users
-                                        where u.Name == client.Name
-                                        select u).ToList();
-                                    if (usersList.Count == 1)
-                                    {
-                                        int indexUser = users.IndexOf(usersList[0]);
-                                        users[indexUser].PastOnline = null;
-                                    }
-                                }
-                                IFormatter formatter = new BinaryFormatter();
-                                NetworkStream strm = new NetworkStream(_clientSocket);
-                                Writer.Write("32");
-                                Writer.Flush();
-                                formatter.Serialize(strm, users);
-                                strm.Close();
+                                LoadUsers();
                                 break;
                             case PLAY_GAME:
                                 SearchAnyGamersAsync();
                                 break;
                             case NOTIFICATION_ABOUT_USER_CAN_ACCEPT_NEW_MESSAGE:
-                                IsCanNextMessage = Reader.ReadBoolean();
+                                NotificationAboutUserCanAcceptNewMessage();
+                                break;
+                            case GET_GAME_RATING:
+                                GetGameRatingAsync();
+                                break;
+                            case UPDATE_SETTINGS:
+                                UpdateSettings();
                                 break;
                             case PlLAYER_S_MOVE:
-                                string stringPosition = Reader.ReadString();
-                                int row = stringPosition[0] - '0';
-                                int column = stringPosition[1] - '0';
-                                _gameLogic.Move(row, column);
+                                PlayerSMove();
                                 break;
                             case OUT_THE_GAME:
                                 ExitFromGame();
+                                break;
+                            case WIN_IN_GAME_WITH_COMPUTER:
+                                WinInGameWithComputer();
+                                break;
+                            case LOSE_IN_GAME_WITH_COMPUTER:
+                                LoseInGameWithComputer();
+                                break;
+                            case DRAW_IN_GAME_WITH_COMPUTER:
+                                DrawInGameWithComputer();
                                 break;
                         }
                     }
@@ -178,7 +154,7 @@ namespace Server.Network
                         ExitFromGame();
                         message = GetNotification("Exit");
                         _server.BroadcastMessageAboutEnteringUser(message, Id, "29");
-                        _userService.UpdatePastOnlineAsync(Id, DateTime.Now);
+                        _userService.UpdatePastOnlineAndSeeMessageIdAsync(Id, DateTime.Now, PastIdMessageWhichCanSee);
                         break;
                     }
                 }
@@ -192,6 +168,13 @@ namespace Server.Network
                 _server.RemoveConnection(Id);
                 Close();
             }
+        }
+
+        public void Close()
+        {
+            Writer?.Close();
+            Reader?.Close();
+            _clientSocket?.Close();
         }
 
         private int GetRequestCode()
@@ -217,25 +200,14 @@ namespace Server.Network
             _human.SendMessage(Name);
         }
 
-        private void SetGender(string gender)
-        {
-            if (gender == "woman")
-            {
-                _human = new Woman();
-            }
-            else
-            {
-                _human = new Man();
-            }
-        }
-
         private void SendMessage()
         {
             IsCanNextMessage = true;
             string message = Reader.ReadString();
-            DateTime timeSendMessage = DateTime.Now; 
-            _server.BroadcastMessageFromUser("30", Name, message, timeSendMessage.ToString(), Id);
+            DateTime timeSendMessage = DateTime.Now;
             PastMessage = _chatService.AddMessage(Id, timeSendMessage, message, Name);
+            PastIdMessageWhichCanSee = PastMessage.Id;
+            _server.BroadcastMessageFromUser("30", Name, message, timeSendMessage.ToString(), PastMessage.Id, Id);
         }
 
         private void GetMessages()
@@ -244,13 +216,16 @@ namespace Server.Network
             NetworkStream strm = new NetworkStream(_clientSocket);
             List<ChatMessageDTO> list = new List<ChatMessageDTO>();
             string typeRequest = Reader.ReadString();
-            if (typeRequest == "Have messages")
-            { 
-                var messages = (List<ChatMessageDTO>) formatter.Deserialize(strm);
-                (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(messages);
-                list = data.Item1;
-                PastMessage = list.Count > 0 ? list[list.Count - 1] : messages[messages.Count - 1];
+            if (typeRequest == "New entering in chat")
+            {
+                list = _chatService.GetCurrentReadMessages(PastIdMessageWhichCanSee);
+                int count = list.Count;
+                (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(list);
+                list.AddRange(data.Item1);
+                PastMessage = data.Item1.Count - 1 >= 0 ? data.Item1[data.Item1.Count - 1] : list[list.Count - 1];
+                PastIdMessageWhichCanSee = PastMessage.Id;
                 Writer.Write(data.Item2);
+                Writer.Write(count);
                 Writer.Flush();
             }
             else if(typeRequest == "No messages")
@@ -271,6 +246,7 @@ namespace Server.Network
                 Writer.Write(0);
                 Writer.Flush();
                 PastMessage = list.Count > 0 ? list[list.Count - 1] : PastMessage;
+                PastIdMessageWhichCanSee = PastMessage.Id;
             }
             else if(typeRequest == "New messages")
             {
@@ -279,6 +255,7 @@ namespace Server.Network
                     (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(PastMessage);
                     list = data.Item1;
                     PastMessage = list.Count > 0 ? list[list.Count - 1] : PastMessage;
+                    PastIdMessageWhichCanSee = PastMessage.Id;
                     IsCanNextMessage = list.Count < 4;
                     Writer.Write("67");
                     Writer.Write(data.Item2);
@@ -295,6 +272,7 @@ namespace Server.Network
                 (List<ChatMessageDTO>, int) data = _chatService.GetNewMessagesAndAllCountNotReadMessages(message);
                 list = data.Item1;
                 PastMessage = list.Count > 0 ? list[list.Count - 1] : message;
+                PastIdMessageWhichCanSee = PastMessage.Id;
                 IsCanNextMessage = data.Item2 == 0;
                 Writer.Write("67");
                 Writer.Write(data.Item2);
@@ -315,11 +293,97 @@ namespace Server.Network
             strm.Close();
         }
 
-        public void Close()
+        private void RewriteUserName()
         {
-            Writer?.Close();
-            Reader?.Close();
-            _clientSocket?.Close();
+            string newName = Reader.ReadString();
+            if (_userService.IsUniqueData(name: newName))
+            {
+                Name = newName;
+                _userService.UpdateUserAsync(1, Id, newName);
+                Writer.Write("40");
+                Writer.Write(Name);
+            }
+            else
+            {
+                Writer.Write("41");
+            }
+            Writer.Flush();
+        }
+
+        private void RewriteUserGender()
+        {
+            string newGender = Reader.ReadString();
+            SetGender(newGender);
+            _userService.UpdateUserAsync(2, Id, newGender);
+        }
+
+        private void SetGender(string gender)
+        {
+            if (gender == "woman")
+            {
+                _human = new Woman();
+            }
+            else
+            {
+                _human = new Man();
+            }
+        }
+
+        private void RewriteUserLogin()
+        {
+            string newLogin = Reader.ReadString();
+            if (_userService.IsUniqueData(login: newLogin))
+            {
+                _userService.UpdateUserAsync(3, Id, newLogin);
+                Writer.Write("42");
+                Writer.Write(newLogin);
+            }
+            else
+            {
+                Writer.Write("43");
+            }
+            Writer.Flush();
+        }
+
+        private async void RewriteUserPasswordAsync()
+        {
+            await Task.Run(() => _userService.UpdateUserAsync(4, Id, Reader.ReadString()));
+        }
+
+        private void Exit()
+        {
+            _server.RemoveConnection(Id);
+            Close();
+        }
+
+        private void NotificationAboutGoToNewPage()
+        {
+            UserActivePage = Reader.ReadString();
+            Writer.Write("");
+            Writer.Flush();
+        }
+
+        private void LoadUsers()
+        {
+            List<UserDTO> users = _userService.GetUsers();
+            List<Client> clients = _server.Clients;
+            foreach (var client in clients)
+            {
+                List<UserDTO> usersList = (from u in users
+                    where u.Name == client.Name
+                    select u).ToList();
+                if (usersList.Count == 1)
+                {
+                    int indexUser = users.IndexOf(usersList[0]);
+                    users[indexUser].PastOnline = null;
+                }
+            }
+            IFormatter formatter = new BinaryFormatter();
+            NetworkStream strm = new NetworkStream(_clientSocket);
+            Writer.Write("32");
+            Writer.Flush();
+            formatter.Serialize(strm, users);
+            strm.Close();
         }
 
         private async void SearchAnyGamersAsync()
@@ -352,6 +416,13 @@ namespace Server.Network
             _gameLogic = gameLogic;
         }
 
+        private void PlayerSMove()
+        {
+            int row = Reader.ReadInt32();
+            int column = Reader.ReadInt32();
+            _gameLogic.Move(row, column);
+        }
+
         public void GameOpponentMove(string position)
         {
             Writer.Write("11-0");
@@ -365,6 +436,8 @@ namespace Server.Network
             Writer.Write(reasonGameOver);
             Writer.Flush();
             _gameLogic = null;
+            int intTypeOfGameOver = GetIntTypeOfGameOver(typeOfGameOver);
+            _gameService.UpdateStatistic(Id, 1, intTypeOfGameOver);
         }
 
         public void EarlyVictory()
@@ -372,6 +445,7 @@ namespace Server.Network
             Writer.Write("11-4");
             Writer.Flush();
             _gameLogic = null;
+            _gameService.UpdateStatistic(Id, 1, 1);
         }
 
         private void ExitFromGame()
@@ -384,7 +458,63 @@ namespace Server.Network
             {
                 _gameLogic.EarlyGameOver(this);
                 _gameLogic = null;
+                _gameService.UpdateStatistic(Id, 1, 2);
             }
+        }
+
+        private int GetIntTypeOfGameOver(string stringTypeOfGameOver) =>
+            stringTypeOfGameOver switch
+            {
+                "11-1" => 1,
+                "11-2" => 2,
+                "11-3" => 3,
+                _ => -1
+            };
+
+        private void NotificationAboutUserCanAcceptNewMessage()
+        {
+            IsCanNextMessage = Reader.ReadBoolean();
+        }
+
+        private async void GetGameRatingAsync()
+        {
+            (List<RatingDTO>, List<RatingDTO>, List<RatingDTO>) ratings = await _gameService.GetGameRatingsAsync();
+            IFormatter formatter = new BinaryFormatter();
+            NetworkStream strm = new NetworkStream(_clientSocket);
+            Writer.Write("13-1");
+            Writer.Flush();
+            formatter.Serialize(strm, ratings.Item1);
+            formatter.Serialize(strm, ratings.Item2);
+            formatter.Serialize(strm, ratings.Item3);
+            strm.Close();
+        }
+
+        private void UpdateSettings()
+        {
+            string data = Reader.ReadString();
+            if (int.TryParse(data, out var typeOfSound))
+            {
+                _settingsService.UpdateData(Id, typeOfSound);
+            }
+            else
+            {
+                _settingsService.UpdateData(Id, data);
+            }
+        }
+
+        private void WinInGameWithComputer()
+        {
+            _gameService.UpdateStatistic(Id, 2, 1);
+        }
+
+        private void LoseInGameWithComputer()
+        {
+            _gameService.UpdateStatistic(Id, 2, 2);
+        }
+
+        private void DrawInGameWithComputer()
+        {
+            _gameService.UpdateStatistic(Id, 2, 3);
         }
     }
 }

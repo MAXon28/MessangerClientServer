@@ -8,20 +8,23 @@ using ChatClient.Model;
 namespace ChatClient.Logic.MessageLogic
 {
     /// <summary>
-    /// Класс, который занимается кэшированием данных о сообщениях чата
+    /// Класс, который занимается кэшированием данных о сообщениях в тот момент, когда пользователь находится непосредственно во вкладке "чат"
     /// </summary>
     public class Cache
     {
-        public Cache()
+        private readonly string _nameCache;
+
+        public Cache() {}
+
+        public Cache(string name)
         {
+            _nameCache = $"{name}MessagesCache";
             IndexLevel = 0;
-            var fileMessagesXML = new FileStream("MessagesCashe", FileMode.Create);
+            var fileMessagesXML = new FileStream(_nameCache, FileMode.Create);
             fileMessagesXML.Close();
         }
 
         public int IndexLevel { get; private set; }
-
-        public bool HaveAnyMessagesWhichNotRead { get; set; }
 
         public void SerializeMessages(List<Message> list)
         {
@@ -42,7 +45,7 @@ namespace ChatClient.Logic.MessageLogic
             {
                 listByAllLevels = list;
             }
-            using (var fileXML = new FileStream("MessagesCashe", FileMode.OpenOrCreate))
+            using (var fileXML = new FileStream(_nameCache, FileMode.OpenOrCreate))
             {
                 xmlSerializer.Serialize(fileXML, listByAllLevels);
                 IndexLevel++;
@@ -52,7 +55,7 @@ namespace ChatClient.Logic.MessageLogic
         private List<Message> DeserializeMessages()
         {
             var xmlSerializer = new XmlSerializer(typeof(List<Message>));
-            using (var fileXML = new FileStream("MessagesCashe", FileMode.OpenOrCreate))
+            using (var fileXML = new FileStream(_nameCache, FileMode.OpenOrCreate))
             {
                 try
                 {
@@ -70,7 +73,7 @@ namespace ChatClient.Logic.MessageLogic
             var xmlSerializer = new XmlSerializer(typeof(List<Message>));
             List<Message> list = new List<Message>();
             List<Message> result = new List<Message>();
-            using (var fileXML = new FileStream("MessagesCashe", FileMode.Open))
+            using (var fileXML = new FileStream(_nameCache, FileMode.Open))
             {
                 list = (List<Message>)xmlSerializer.Deserialize(fileXML);
             }
@@ -100,7 +103,7 @@ namespace ChatClient.Logic.MessageLogic
                 }
             }
 
-            using (var fileXML = new FileStream("MessagesCashe", FileMode.Create))
+            using (var fileXML = new FileStream(_nameCache, FileMode.Create))
             {
                 xmlSerializer.Serialize(fileXML, list);
             }

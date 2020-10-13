@@ -84,7 +84,7 @@ namespace ChatClient.Logic
             return int.Parse(answer.ToString());
         }
 
-        public string Authorization(string login, string password, ref string name, ref string gender)
+        public string Authorization(string login, string password, ref string name, ref string gender, ref bool isHavePastMessage)
         {
             IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
             _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -106,6 +106,7 @@ namespace ChatClient.Logic
             {
                 name = reader.ReadString();
                 gender = reader.ReadString();
+                isHavePastMessage = reader.ReadBoolean();
 
                 _listenerThread = new Thread(ReceiveMessage) { IsBackground = true };
                 _listenerThread.Start();
@@ -176,7 +177,7 @@ namespace ChatClient.Logic
             var writer = new BinaryWriter(networkStream);
 
             writer.Write(3);
-            writer.Write("Have messages");
+            writer.Write("New entering in chat");
             writer.Flush();
 
             IFormatter formatter = new BinaryFormatter();
@@ -188,6 +189,25 @@ namespace ChatClient.Logic
             var list = (List<ChatMessageDTO>)formatter.Deserialize(networkStream);
 
             return (list, count);
+        }
+
+        public (List<ChatMessageDTO>, int, int) GetMessagesStartWithPastMessage()
+        {
+            var networkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStream);
+
+            writer.Write(3);
+            writer.Write("New entering in chat");
+            writer.Flush();
+
+            var reader = new BinaryReader(networkStream);
+            int count = reader.ReadInt32();
+            int position = reader.ReadInt32();
+
+            IFormatter formatter = new BinaryFormatter();
+            var list = (List<ChatMessageDTO>)formatter.Deserialize(networkStream);
+
+            return (list, count, position);
         }
 
         public List<ChatMessageDTO> GetMessagesStart()
@@ -267,13 +287,14 @@ namespace ChatClient.Logic
             writer.Flush();
         }
 
-        public void SendPlayerSMove(string square)
+        public void SendPlayerSMove(int tableRow, int tableColumn)
         {
             var networkStreamToWrite = new NetworkStream(_client);
             var writer = new BinaryWriter(networkStreamToWrite);
 
             writer.Write(110);
-            writer.Write(square);
+            writer.Write(tableRow);
+            writer.Write(tableColumn);
             writer.Flush();
         }
 
@@ -283,6 +304,34 @@ namespace ChatClient.Logic
             var writer = new BinaryWriter(networkStreamToWrite);
 
             writer.Write(111);
+            writer.Flush();
+        }
+
+        public void GameOverThisComputer(int resultCode)
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(resultCode);
+            writer.Flush();
+        }
+
+        public void GetGameRating()
+        {
+            NetworkStream = new NetworkStream(_client);
+            var writer = new BinaryWriter(NetworkStream);
+
+            writer.Write(13);
+            writer.Flush();
+        }
+
+        public void GetUpdateSettings(string data)
+        {
+            var networkStreamToWrite = new NetworkStream(_client);
+            var writer = new BinaryWriter(networkStreamToWrite);
+
+            writer.Write(14);
+            writer.Write(data);
             writer.Flush();
         }
 

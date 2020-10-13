@@ -177,7 +177,7 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Foreground="#f4f4f4"
-                            Text="{Binding Login}"
+                            Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}"
                             VerticalContentAlignment="Center"
                             FontSize="28"
                             Padding="3, 12, 12, 12"

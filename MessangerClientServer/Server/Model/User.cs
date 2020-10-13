@@ -19,6 +19,8 @@ namespace Server.Model
 
         public DateTime? PastOnline { get; set; }
 
+        public int ChatMessageId { get; set; }
+
         public virtual ICollection<ChatMessage> Messages { get; set; }
 
         public virtual ICollection<GameStatistic> GameStatistics { get; set; }

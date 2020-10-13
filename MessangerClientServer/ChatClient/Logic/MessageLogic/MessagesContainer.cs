@@ -7,14 +7,21 @@ using ChatClient.Model;
 
 namespace ChatClient.Logic.MessageLogic
 {
+    /// <summary>
+    /// Класс-кэш, который хранит в себе данные о сообщениях, пока пользователь находится на других вкладках аккаунта
+    /// </summary>
     public static class MessagesContainer
     {
         private static List<Message> _list;
+        private static string _fileName;
 
-        static MessagesContainer()
+        static MessagesContainer() { }
+
+        public static void OpenContainer(string username)
         {
+            _fileName = $"{username}Messages";
             var xmlSerializer = new XmlSerializer(typeof(List<Message>));
-            using (var fileXML = new FileStream("Messages", FileMode.OpenOrCreate))
+            using (var fileXML = new FileStream(_fileName, FileMode.Create))
             {
                 try
                 {
@@ -31,7 +38,7 @@ namespace ChatClient.Logic.MessageLogic
         {
             List<Message> messagesForView = new List<Message>(_list);
             var xmlSerializer = new XmlSerializer(typeof(List<Message>));
-            using (var fileXML = new FileStream("Messages", FileMode.OpenOrCreate))
+            using (var fileXML = new FileStream(_fileName, FileMode.OpenOrCreate))
             {
                 try
                 {
@@ -64,7 +71,7 @@ namespace ChatClient.Logic.MessageLogic
         public static void SaveMessages()
         {
             var xmlSerializer = new XmlSerializer(typeof(List<Message>));
-            using (var fileXML = new FileStream("Messages", FileMode.Create))
+            using (var fileXML = new FileStream(_fileName, FileMode.Create))
             {
                 xmlSerializer.Serialize(fileXML, _list.Skip(_list.Count - 100).ToList());
             }
