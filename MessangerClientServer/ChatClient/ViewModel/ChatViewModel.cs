@@ -102,7 +102,7 @@ namespace ChatClient.ViewModel
                         SendMessage = chatMessagesServer[i].SendMessage,
                         IsItMe = chatMessagesServer[i].SenderName == Name
                     });
-                    AddNewMessageIntContainerAndUpdateDateSend();
+                    AddNewMessageInContainerAndUpdateDateSend();
                 }
                 if (chatMessagesServer.Count > data.Item3)
                 {
@@ -131,12 +131,12 @@ namespace ChatClient.ViewModel
                         SendMessage = message.SendMessage,
                         IsItMe = message.SenderName == Name
                     });
-                    AddNewMessageIntContainerAndUpdateDateSend();
+                    AddNewMessageInContainerAndUpdateDateSend();
                 }
             }
         }
 
-        public void UsuallyLoad()
+        public async void UsuallyLoadAsync()
         {
             Messages = new ObservableCollection<Message>();
             List<Message> chatMessagesClient = MessagesContainer.GetMessages();
@@ -152,7 +152,7 @@ namespace ChatClient.ViewModel
 
             if (Messages.Count > 0)
             {
-                _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                await Task.Run(() => _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages"));
             }
         }
 
@@ -180,7 +180,7 @@ namespace ChatClient.ViewModel
         {
             get
             {
-                return new RelayCommand(() =>
+                return new RelayCommand(async () =>
                 {
                     if (!string.IsNullOrEmpty(Message))
                     {
@@ -189,11 +189,11 @@ namespace ChatClient.ViewModel
                             Messages.Clear();
                             if (CountNewMessages < 100 && _cache.IndexLevel > 0)
                             {
-                                Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
+                                _cache.DeserializeMessages(0);
                             }
                             CountNewMessages = 0;
-                            _serverWorker.GetMessagesActual();
                             _haveNewMessage = true;
+                            await Task.Run(_serverWorker.GetMessagesActual);
                         }
                         else if (_typeOfSource == 2)
                         {
@@ -210,26 +210,26 @@ namespace ChatClient.ViewModel
                                 SendMessage = Message,
                                 IsItMe = true
                             });
-                            _serverWorker.SendMessage(Message);
-                            AddNewMessageIntContainerAndUpdateDateSend();
+                            await Task.Run(() => _serverWorker.SendMessage(Message));
+                            AddNewMessageInContainerAndUpdateDateSend();
                             _chatView.Scroll();
                             _topID = Messages[0].Id;
                             Message = "";
                         }
                         _countClickButtonToBottom = 0;
                         IsVisibleButtonToBottom = false;
-                        _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                        await Task.Run(() => _serverWorker.GetUpdate(!IsVisibleButtonToBottom));
                     }
                 });
             }
         }
 
-        public void UpdateMessages()
+        public async void UpdateMessagesAsync()
         {
             IsFocus = false;
             if (!_haveNewMessage && !_isGoToBottom)
             {
-                _serverWorker.GetMessages(_topID, "Have ID");
+                await Task.Run(() => _serverWorker.GetMessages(_topID, "Have ID"));
             }
         }
 
@@ -252,7 +252,7 @@ namespace ChatClient.ViewModel
         {
             get
             {
-                return new RelayCommand(() =>
+                return new RelayCommand( async () =>
                 {
                     if (_typeOfSource == 2 && CountNewMessages == 0) // Если новых сообщений нет, но есть закэшированные данные
                     {
@@ -266,11 +266,11 @@ namespace ChatClient.ViewModel
                         if (CountNewMessages < 200 && _cache.IndexLevel > 0)
                         {
                             Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
-                            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                            await Task.Run(() => _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages"));
                         }
                         else
                         {
-                            _serverWorker.GetMessagesActual();
+                            await Task.Run(_serverWorker.GetMessagesActual);
                         }
                         _countClickButtonToBottom = 0;
                     }
@@ -278,18 +278,17 @@ namespace ChatClient.ViewModel
                     {
                         if (CountNewMessages < 200)
                         {
-                            Messages.Clear();
                             if (_cache.IndexLevel > 0)
                             {
+                                Messages.Clear();
                                 Messages = new ObservableCollection<Message>(_cache.DeserializeMessages(0));
                             }
-                            _serverWorker.GetMessagesActual();
-                        }
-                        else
-                        {
-                            _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                            _chatView.Scroll(Messages.Count - 5);
                             _countClickButtonToBottom++;
+                            return;
                         }
+                        _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                        _countClickButtonToBottom++;
                         _isGoToBottom = true;
                         return;
                     }
@@ -301,7 +300,7 @@ namespace ChatClient.ViewModel
                     _countClickButtonToBottom = 0;
                     CountNewMessages = 0;
                     IsVisibleButtonToBottom = false;
-                    _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                    await Task.Run(() => _serverWorker.GetUpdate(!IsVisibleButtonToBottom));
                 });
             }
         }
@@ -310,13 +309,13 @@ namespace ChatClient.ViewModel
         /// Отображает или убирает кнопку "Вниз"
         /// </summary>
         /// <param name="isVisible"></param>
-        public void ShowButtonToBottom(bool isVisible)
+        public async void ShowButtonToBottomAsync(bool isVisible)
         {
             IsFocus = false;
-            if (_cache.IndexLevel == 0 && CountNewMessages == 0)
+            if (_cache.IndexLevel == 0 && CountNewMessages == 0 && !_haveNewMessage)
             {
                 IsVisibleButtonToBottom = isVisible;
-                _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
+                await Task.Run(() => _serverWorker.GetUpdate(!IsVisibleButtonToBottom));
                 if (IsVisibleButtonToBottom)
                 {
                     GetFlickerAsync();
@@ -344,13 +343,13 @@ namespace ChatClient.ViewModel
             {
                 if (CountNewMessages > 100)
                 {
-                    _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages");
+                    await Task.Run(() => _serverWorker.GetMessages(Messages[Messages.Count - 1].Id, "New messages"));
                 }
                 else
                 {
                     CountNewMessages = 0;
                     var mapper = new MapperConfiguration(cfg => cfg.CreateMap<Message, ChatMessageDTO>()).CreateMapper();
-                    _serverWorker.GetMessages(mapper.Map<Message, ChatMessageDTO>(MessagesContainer.GetMessage()));
+                    await Task.Run(() => _serverWorker.GetMessages(mapper.Map<Message, ChatMessageDTO>(MessagesContainer.GetMessage())));
                 }
                 _countClickButtonToBottom = 0;
             }
@@ -398,14 +397,14 @@ namespace ChatClient.ViewModel
                     Name = binaryReader.ReadString();
                     break;
                 case "41":
-                    NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!", "Error");
+                    NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегистрирован!", "Error");
                     break;
                 case "42":
                     NotificationTranslator.RewriteDataNotification("Логин пользователя изменён!", "Success");
                     UserContainer.Login = binaryReader.ReadString();
                     break;
                 case "43":
-                    NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегестрирован!", "Error");
+                    NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегистрирован!", "Error");
                     break;
                 case "67":
                     Application.Current.Dispatcher.Invoke(() =>
@@ -432,9 +431,10 @@ namespace ChatClient.ViewModel
                             SendMessage = message.SendMessage,
                             IsItMe = message.SenderName == Name
                         });
-                        AddNewMessageIntContainerAndUpdateDateSend();
+                        AddNewMessageInContainerAndUpdateDateSend();
                     }
                     IsVisibleButtonToBottom = true;
+                    GetFlickerAsync();
                     _serverWorker.GetUpdate(!IsVisibleButtonToBottom);
                     CountNewMessages = count;
                     _chatView.Scroll(index);
@@ -483,12 +483,13 @@ namespace ChatClient.ViewModel
                     DateSend = binaryReader.ReadString(),
                     IsItMe = false
                 });
-                AddNewMessageIntContainerAndUpdateDateSend();
+                AddNewMessageInContainerAndUpdateDateSend();
                 _chatView.Scroll();
             }
             else
             {
                 CountNewMessages++;
+                _typeOfSource = 1;
             }
         }
 
@@ -542,7 +543,7 @@ namespace ChatClient.ViewModel
                     IsItMe = true
                 });
                 _serverWorker.SendMessage(Message);
-                AddNewMessageIntContainerAndUpdateDateSend();
+                AddNewMessageInContainerAndUpdateDateSend();
                 Message = "";
                 _chatView.Scroll();
                 _haveNewMessage = false;
@@ -564,6 +565,7 @@ namespace ChatClient.ViewModel
             {
                 for (int i = 0; i < list.Count; i++)
                 {
+                    //if (Messages.IndexOf(list[i]) == -1)
                     Messages.Add(new Message()
                     {
                         Id = list[i].Id,
@@ -578,7 +580,7 @@ namespace ChatClient.ViewModel
                     }
                     else
                     {
-                        AddNewMessageIntContainerAndUpdateDateSend();
+                        AddNewMessageInContainerAndUpdateDateSend();
                     }
                 }
 
@@ -600,7 +602,7 @@ namespace ChatClient.ViewModel
         /// <summary>
         /// Загружает сообщение в контейнер и задаёт понятную для пользователя дату
         /// </summary>
-        private void AddNewMessageIntContainerAndUpdateDateSend()
+        private void AddNewMessageInContainerAndUpdateDateSend()
         {
             MessagesContainer.AddMessage(Messages[Messages.Count - 1].Id,
                 Messages[Messages.Count - 1].SenderName,

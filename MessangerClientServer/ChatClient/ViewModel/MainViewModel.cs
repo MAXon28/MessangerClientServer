@@ -84,7 +84,7 @@ namespace ChatClient.ViewModel
         {
             IsCanClick = false;
             bool isCanContinue = true;
-            if (_serverConnection.Ip == null)
+            if (string.IsNullOrEmpty(_serverConnection.Ip) || _serverConnection.Port == 0)
             {
                 var serverDialogViewModel = new ServerDialogViewModel();
                 ServerDialogView serverDialogView = new ServerDialogView(serverDialogViewModel);
@@ -130,6 +130,7 @@ namespace ChatClient.ViewModel
 
         private async void ToServerAsync()
         {
+            (string, string, string, bool) dataTuple;
             string resultCode = "";
             string name = "";
             string gender = "";
@@ -141,7 +142,11 @@ namespace ChatClient.ViewModel
                 try
                 {
                     _serverWorker = ServerWorker.NewInstance();
-                    resultCode = _serverWorker.Authorization(login, GetHash(password), ref name, ref gender, ref isHavePastMessage);
+                    dataTuple = await _serverWorker.AuthorizationAsync(login, GetHash(password));
+                    resultCode = dataTuple.Item1;
+                    name = dataTuple.Item2;
+                    gender = dataTuple.Item3;
+                    isHavePastMessage = dataTuple.Item4;
                     if (resultCode == "28")
                     {
                         if (IsRemember)
@@ -172,6 +177,7 @@ namespace ChatClient.ViewModel
                 mainChatPageViewModel.StartLoad(isHavePastMessage);
                 Login = "";
                 _viewWindow.PasswordWrite("");
+                IsRemember = false;
             }
             else if (resultCode == "")
             {

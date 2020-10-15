@@ -396,7 +396,7 @@ namespace Server.Network
                     Writer.Write("1-11");
                     Writer.Write(_gameLogic.FirstGamer != this ? _gameLogic.FirstGamer.Name : _gameLogic.SecondGamer.Name);
                     Writer.Write(_gameLogic.FirstGamer == this ? _gameLogic.FirstGamerSymbol : _gameLogic.SecondGamerSymbol);
-                    Console.WriteLine("Топчик!");
+                    Console.WriteLine("X0!");
                 }
                 else if (str == "Have not gamer")
                 {

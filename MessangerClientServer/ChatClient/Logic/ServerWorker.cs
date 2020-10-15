@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using ChatClient.Interface;
 using ChatClient.Logic.NotificationLogic;
 using ChatClient.Model;
@@ -52,74 +53,79 @@ namespace ChatClient.Logic
             _serverWorker = null;
         }
 
-        public int Registration(string login, string password, string gender, string name)
+        public async Task<int> RegistrationAsync(string login, string password, string gender, string name)
         {
-            IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
-            Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.Connect(tcpEndPoint);
-
-            NetworkStream networkStreamToWrite = new NetworkStream(client);
-            BinaryWriter writer = new BinaryWriter(networkStreamToWrite);
-
-            writer.Write(0);
-            writer.Write(login);
-            writer.Write(password);
-            writer.Write(gender);
-            writer.Write(name);
-
-            writer.Flush();
-
-            var bufferBytes = new byte[2];
-            var answer = new StringBuilder();
-            do
+            return await Task.Run(() =>
             {
-                int size = client.Receive(bufferBytes);
-                answer.Append(Encoding.UTF8.GetString(bufferBytes, 0, size));
-            }
-            while (client.Available > 0);
+                IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
+                Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                client.Connect(tcpEndPoint);
 
-            client.Shutdown(SocketShutdown.Both);
-            client.Close();
+                NetworkStream networkStreamToWrite = new NetworkStream(client);
+                BinaryWriter writer = new BinaryWriter(networkStreamToWrite);
 
-            return int.Parse(answer.ToString());
+                writer.Write(0);
+                writer.Write(login);
+                writer.Write(password);
+                writer.Write(gender);
+                writer.Write(name);
+
+                writer.Flush();
+
+                var bufferBytes = new byte[2];
+                var answer = new StringBuilder();
+                do
+                {
+                    int size = client.Receive(bufferBytes);
+                    answer.Append(Encoding.UTF8.GetString(bufferBytes, 0, size));
+                } while (client.Available > 0);
+
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
+
+                return int.Parse(answer.ToString());
+            });
         }
 
-        public string Authorization(string login, string password, ref string name, ref string gender, ref bool isHavePastMessage)
+        public async Task<(string, string, string, bool)> AuthorizationAsync(string login, string password)
         {
-            IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
-            _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _client.Connect(tcpEndPoint);
-
-            var networkStreamToWrite = new NetworkStream(_client);
-            var writer = new BinaryWriter(networkStreamToWrite);
-
-            writer.Write(1);
-            writer.Write(login);
-            writer.Write(password);
-
-            writer.Flush();
-
-            var networkStreamReader = new NetworkStream(_client);
-            var reader = new BinaryReader(networkStreamReader);
-
-            if (reader.ReadString() == "28")
+            return await Task.Run(() =>
             {
-                name = reader.ReadString();
-                gender = reader.ReadString();
-                isHavePastMessage = reader.ReadBoolean();
+                IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Parse(_serverConnection.Ip), _serverConnection.Port);
+                _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _client.Connect(tcpEndPoint);
 
-                _listenerThread = new Thread(ReceiveMessage) { IsBackground = true };
-                _listenerThread.Start();
+                var networkStreamToWrite = new NetworkStream(_client);
+                var writer = new BinaryWriter(networkStreamToWrite);
 
-                SettingsContainer.TypeOfSoundAtNotificationNewMessage = reader.ReadInt32();
-                SettingsContainer.TypeOfNotification = reader.ReadString();
+                writer.Write(1);
+                writer.Write(login);
+                writer.Write(password);
 
-                return "28";
-            }
+                writer.Flush();
 
-            _client.Shutdown(SocketShutdown.Both);
-            _client.Close();
-            return "34";
+                var networkStreamReader = new NetworkStream(_client);
+                var reader = new BinaryReader(networkStreamReader);
+
+                if (reader.ReadString() == "28")
+                {
+                    var name = reader.ReadString();
+                    var gender = reader.ReadString();
+                    var isHavePastMessage = reader.ReadBoolean();
+
+                    _listenerThread = new Thread(ReceiveMessage) {IsBackground = true};
+                    _listenerThread.Start();
+
+                    SettingsContainer.TypeOfSoundAtNotificationNewMessage = reader.ReadInt32();
+                    SettingsContainer.TypeOfNotification = reader.ReadString();
+
+                    return ("28", name, gender, isHavePastMessage);
+                }
+
+                _client.Shutdown(SocketShutdown.Both);
+                _client.Close();
+                return ("34", "", "", false);
+            });
         }
 
         public void UpdateName(string name)
@@ -169,26 +175,6 @@ namespace ChatClient.Logic
 
             writer.Write(10);
             writer.Flush();
-        }
-
-        public (List<ChatMessageDTO>, int) GetMessagesStart(List<ChatMessageDTO> messages)
-        {
-            var networkStream = new NetworkStream(_client);
-            var writer = new BinaryWriter(networkStream);
-
-            writer.Write(3);
-            writer.Write("New entering in chat");
-            writer.Flush();
-
-            IFormatter formatter = new BinaryFormatter();
-            formatter.Serialize(networkStream, messages);
-
-            var reader = new BinaryReader(networkStream);
-            int count = reader.ReadInt32();
-
-            var list = (List<ChatMessageDTO>)formatter.Deserialize(networkStream);
-
-            return (list, count);
         }
 
         public (List<ChatMessageDTO>, int, int) GetMessagesStartWithPastMessage()

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:viewModel="clr-namespace:ChatClient.ViewModel"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:fa="http://schemas.fontawesome.io/icons/"
              mc:Ignorable="d" 
              d:DesignHeight="728" d:DesignWidth="728" Background="#373737" Visibility="{Binding Condition}">
 
@@ -218,6 +219,16 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             CornerRadius="9">
+            <Border.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger  Binding="{Binding IsVisibleSpinner, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Resources>
             <DockPanel 
                 Focusable="False"
                 Margin="0">
@@ -471,6 +482,36 @@
             </DockPanel>
         </Border>
 
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Vertical">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type StackPanel}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger  Binding="{Binding IsVisibleSpinner, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Resources>
+            <fa:FontAwesome
+                Icon="Cog" 
+                FontSize="67"
+                Foreground="#1E90FF"
+                Spin="True" 
+                SpinDuration="3"/>
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Text="Идёт регистрация... Пожалуйста, подождите!"
+                TextAlignment="Center"
+                TextWrapping="Wrap"
+                Foreground="#1E90FF"
+                FontSize="19"/>
+        </StackPanel>
+
         <Button
             Command="{Binding OpenServerSettings}"
             HorizontalAlignment="Right"
@@ -495,6 +536,14 @@
                     FontWeight="Bold"/>
             </DockPanel>
             <Button.Resources>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger  Binding="{Binding IsVisibleSpinner, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="4"/>
                 </Style>
@@ -522,6 +571,14 @@
                     FontWeight="Bold"/>
             </DockPanel>
             <Button.Resources>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger  Binding="{Binding IsVisibleSpinner, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="4"/>
                 </Style>

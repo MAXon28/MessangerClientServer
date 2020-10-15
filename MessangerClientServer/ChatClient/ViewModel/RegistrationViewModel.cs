@@ -20,6 +20,7 @@ namespace ChatClient.ViewModel
         private ServerConnection _serverConnection;
         private string _login;
         private string _name;
+        private bool _isCanClick;
 
         public RegistrationViewModel()
         {
@@ -29,6 +30,8 @@ namespace ChatClient.ViewModel
             StandardColor();
             _serverConnection = ServerConnection.NewInstance();
             IndexGender = -1;
+            _isCanClick = true;
+            IsVisibleSpinner = false;
         }
 
         public string Condition { get; set; }
@@ -73,16 +76,41 @@ namespace ChatClient.ViewModel
 
         public int CountPasswordRepeat => PasswordRepeat?.Length ?? 0;
 
+        public bool IsVisibleSpinner { get; set; }
+
         public ICommand Registration
         {
             get
             {
-                return new RelayCommand(() =>
+                return new RelayCommand(async () =>
                 {
-                    bool isReady = IsRightFilling() && IsReady();
-                    if (isReady)
+                    if (_isCanClick)
                     {
-                        Condition = "Collapsed";
+                        _isCanClick = false;
+                        bool isCanContinue = true;
+                        if (string.IsNullOrEmpty(_serverConnection.Ip) || _serverConnection.Port == 0)
+                        {
+                            var serverDialogViewModel = new ServerDialogViewModel();
+                            ServerDialogView serverDialogView = new ServerDialogView(serverDialogViewModel);
+                            serverDialogView.ShowDialog();
+                            isCanContinue = serverDialogViewModel.IsConfirm;
+                        }
+                        if (isCanContinue)
+                        {
+                            bool isReady = IsRightFilling() && await IsReadyAsync();
+                            if (isReady)
+                            {
+                                Condition = "Collapsed";
+                            }
+                            else
+                            {
+                                _isCanClick = true;
+                            }
+                        }
+                        else
+                        {
+                            _isCanClick = true;
+                        }
                     }
                 });
             }
@@ -147,16 +175,16 @@ namespace ChatClient.ViewModel
             return true;
         }
 
-        private bool IsReady()
+        private async Task<bool> IsReadyAsync()
         {
             bool isReady = true;
 
             string gender = IndexGender == 0 ? "man" : "woman";
-
+            IsVisibleSpinner = true;
             try
             {
-                var serverWorker = ServerWorker.NewInstance(); ;
-                int resultCode = serverWorker.Registration(Login, GetHash(new System.Net.NetworkCredential(string.Empty, Password).Password), gender, Name);
+                var serverWorker = ServerWorker.NewInstance();
+                int resultCode = await serverWorker.RegistrationAsync(Login, GetHash(new System.Net.NetworkCredential(string.Empty, Password).Password), gender, Name);
 
                 if (resultCode == 33)
                 {
@@ -164,13 +192,14 @@ namespace ChatClient.ViewModel
                     errorDialogView.ShowDialog();
                     isReady = false;
                 }
-
+                IsVisibleSpinner = false;
                 return isReady;
             }
             catch
             {
                 ErrorDialogView errorDialogView = new ErrorDialogView(new ErrorDialogViewModel("Ошибка подключения к серверу!"));
                 errorDialogView.ShowDialog();
+                IsVisibleSpinner = false;
                 return false;
             }
         }

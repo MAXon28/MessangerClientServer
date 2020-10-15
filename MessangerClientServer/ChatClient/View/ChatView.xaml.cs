@@ -43,7 +43,7 @@ namespace ChatClient.View
 
             if (viewModel.IsVisibleButtonToBottom != pixelInList < e.ExtentHeight - 928)
             {
-                viewModel.ShowButtonToBottom(pixelInList < e.ExtentHeight - 928);
+                viewModel.ShowButtonToBottomAsync(pixelInList < e.ExtentHeight - 928);
             }
 
 
@@ -56,7 +56,7 @@ namespace ChatClient.View
             _countZero += Convert.ToInt32(pixelInList) == 0 ? 1 : -_countZero;
             if (_countZero == 1)
             {
-                viewModel.UpdateMessages();
+                viewModel.UpdateMessagesAsync();
             }
         }
 

@@ -213,7 +213,7 @@ namespace ChatClient.ViewModel
 
                     Content = _chatView;
                     Content.DataContext = _chatViewModel;
-                    _chatViewModel.UsuallyLoad();
+                    _chatViewModel.UsuallyLoadAsync();
 
                     LoadEnable(true, true, false, true, true);
                 });

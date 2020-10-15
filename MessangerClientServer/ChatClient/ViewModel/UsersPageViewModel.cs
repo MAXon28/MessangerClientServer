@@ -137,7 +137,7 @@ namespace ChatClient.ViewModel
             }
             else if (code == "41")
             {
-                NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегестрирован!", "Error");
+                NotificationTranslator.RewriteDataNotification("Имя пользователя не изменено! Пользователь с таким именем уже зарегистрирован!", "Error");
             }
             else if (code == "42")
             {
@@ -146,7 +146,7 @@ namespace ChatClient.ViewModel
             }
             else if (code == "43")
             {
-                NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегестрирован!", "Error");
+                NotificationTranslator.RewriteDataNotification("Логин пользователя не изменён! Пользователь с таким логином уже зарегистрирован!", "Error");
             }
         }
 

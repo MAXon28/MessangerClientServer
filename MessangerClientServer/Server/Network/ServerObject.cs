@@ -183,6 +183,13 @@ namespace Server.Network
                             _clients[i].Writer.Write(date);
                             _clients[i].Writer.Flush();
                             _clients[i].PastIdMessageWhichCanSee = messageId;
+                            _clients[i].PastMessage = new ChatMessageDTO
+                            {
+                                Id = _clients[i].PastMessage.Id + 1,
+                                SenderName = name,
+                                SendMessage = message,
+                                DateSend = date
+                            };
                         }
                         else
                         {
@@ -190,13 +197,6 @@ namespace Server.Network
                             _clients[i].Writer.Write("+1");
                             _clients[i].Writer.Flush();
                         }
-                        _clients[i].PastMessage = new ChatMessageDTO
-                        {
-                            Id = _clients[i].PastMessage.Id + 1,
-                            SenderName = name,
-                            SendMessage = message,
-                            DateSend = date
-                        };
                     }
                     else
                     {
