@@ -93,7 +93,6 @@ namespace ChatClient.ViewModel
             {
                 NotificationTranslator.RewriteDataNotification("Имя пользователя изменено!", "Success");
                 Name = binaryReader.ReadString();
-                //MessagesContainer.RewriteFile(Name);
             }
             else if (code == "41")
             {

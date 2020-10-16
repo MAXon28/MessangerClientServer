@@ -185,7 +185,7 @@ namespace Server.Network
                             _clients[i].PastIdMessageWhichCanSee = messageId;
                             _clients[i].PastMessage = new ChatMessageDTO
                             {
-                                Id = _clients[i].PastMessage.Id + 1,
+                                Id = _clients[i].PastMessage != null ? _clients[i].PastMessage.Id + 1 : 1,
                                 SenderName = name,
                                 SendMessage = message,
                                 DateSend = date

@@ -113,7 +113,6 @@ namespace Server.BusinessLogic
                 return list;
             }
 
-
             var listData = _efUnitOfWork.CertainMessages.GetMessagesBeforeId(_sessionData.DataMessages[0].Id).ToList();
             int needCountData = listData.Count > 100 - index ? listData.Count - 100 - index : 0;
             for (int i = listData.Count - 1; i >= needCountData; i--)
@@ -142,7 +141,6 @@ namespace Server.BusinessLogic
                 list = _sessionData.DataMessages.Skip(count).Take(200).ToList();
                 return (list, _sessionData.DataMessages.Count - list.Count - count);
             }
-
 
             int index = _sessionData.IndexOf(chatMessages[0]);
             if (index > -1)

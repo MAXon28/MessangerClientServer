@@ -54,10 +54,16 @@ namespace ChatClient.Logic.NotificationLogic
                 switch (typeNotification)
                 {
                     case "Success":
-                        _notifier.ShowSuccess(information);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            _notifier.ShowSuccess(information);
+                        }, DispatcherPriority.Background);
                         break;
                     case "Information":
-                        _notifier.ShowInformation(information);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            _notifier.ShowInformation(information);
+                        }, DispatcherPriority.Background);
                         break;
                 }
             }
@@ -80,10 +86,16 @@ namespace ChatClient.Logic.NotificationLogic
             switch (typeNotification)
             {
                 case "Success":
-                    _notifier.ShowSuccess(information);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        _notifier.ShowSuccess(information);
+                    }, DispatcherPriority.Background);
                     break;
                 case "Error":
-                    _notifier.ShowError(information);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        _notifier.ShowError(information);
+                    }, DispatcherPriority.Background);
                     break;
             }
         }
